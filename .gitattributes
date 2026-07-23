@@ -1,0 +1,3 @@
+data.js merge=ours
+data.js -diff
+config.public.yaml merge=ours

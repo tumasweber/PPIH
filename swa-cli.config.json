@@ -1,0 +1,12 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "dashboard": {
+      "appLocation": ".",
+      "outputLocation": ".",
+      "appBuildCommand": "",
+      "env": "production",
+      "clientRuntimeVersion": "latest"
+    }
+  }
+}

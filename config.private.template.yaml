@@ -1,0 +1,51 @@
+# ============================================================
+#  BCF Dashboard — Configuration Template (PRIVATE)
+#  Copy this file to config.private.yaml. NEVER commit config.private.yaml —
+#  it must stay in .gitignore. This template itself contains no real
+#  secrets and is safe to track in git.
+#
+#  config.private.yaml holds passwords and tokens; everything else (org
+#  structure, layout, mappings) belongs in config.public.yaml — see
+#  config.template.yaml and HANDOVER.md rule #3.
+# ============================================================
+
+# Password required to open the Admin Board itself. Leave empty to disable
+# the Admin Board login prompt (fine for a local-only dev machine).
+admin_password: ""
+
+# Encryption password for data.js (AES-256-GCM / PBKDF2-SHA256 200k) and,
+# unless overridden, for the dashboard shell login too.
+data_password: "CHANGE-ME"
+
+# Azure Static Web Apps deployment token — only needed for the Admin
+# Board's "Direct Azure Deploy" fallback (bypasses GitHub Actions).
+# Azure Portal → your Static Web App → Manage deployment token.
+azure_swa_token: ""
+
+# SharePoint Online credentials for a doc_management source with
+# source_type: sharepoint_live. config_utils.py's public/private split is
+# name-based: any doc_management source literally keyed "sharepoint" is
+# treated as entirely private (not just its credentials) and goes here in
+# full — label, path, columns, status_map AND the nested sharepoint: OAuth
+# block. Don't rename it; don't duplicate it in config.public.yaml.
+# doc_management:
+#   sources:
+#     sharepoint:
+#       enabled: true
+#       label: "SharePoint"
+#       sheet: "SharePoint"
+#       columns: {doc_number: Name, title: Title, discipline: Discipline,
+#                 status: "Approval Status", revision: Version, date: Modified,
+#                 modified_by: "Modified By"}
+#       status_map: {Approved: Approved, Signed: Signed, Draft: "In Review",
+#                    "Under Review": "In Review", Rejected: Rejected}
+#       source_type: sharepoint_live
+#       sharepoint:
+#         query_mode: folder
+#         site_url: "https://yourtenant.sharepoint.com/sites/YourSite/"
+#         tenant_id: "CHANGE-ME"
+#         client_id: "CHANGE-ME"
+#         client_secret: "CHANGE-ME"
+#         library: "Documents"
+#         folder_path: "path/within/library"
+#         file_pattern: "sharepoint_export\\.xlsx$"

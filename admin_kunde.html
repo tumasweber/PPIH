@@ -1,0 +1,2750 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BCF Dashboard — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg0:  #070e13;
+  --bg1:  #0a1419;
+  --bg2:  #0f1e26;
+  --bg3:  #162530;
+  --topbar-bg: #005f7d;
+  --rhyba-teal: #005f7d;
+  --rhyba-teal-light: #73b5e2;
+  --accent: #0081b1;
+  --text1: #e8f0f5;
+  --text2: #a8bec8;
+  --text3: #607880;
+  --border: #1e3d50;
+  --r: 6px;
+  --success: #5ab87a;
+  --warn: #e09a2a;
+  --error: #e05c5c;
+}
+[data-theme="light"] {
+  --bg0: #f0f4f7; --bg1: #ffffff; --bg2: #f5f8fa; --bg3: #eaf0f4;
+  --text1: #0d1f2a; --text2: #3a5060; --text3: #7a9aaa;
+  --border: #d0dde5; --topbar-bg: #005f7d;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 13px; font-family: 'Montserrat', sans-serif; }
+html[data-size="small"]  { font-size: 11px; }
+html[data-size="normal"] { font-size: 13px; }
+html[data-size="medium"] { font-size: 15px; }
+html[data-size="large"]  { font-size: 17px; }
+body { background: var(--bg0); color: var(--text1); min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── topbar ── */
+.topbar {
+  background: var(--topbar-bg);
+  display: flex; align-items: center; gap: 20px;
+  padding: 0 24px; height: 52px; flex-shrink: 0;
+  border-bottom: 2px solid rgba(115,181,226,.2);
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding-right: 20px; border-right: 1px solid rgba(115,181,226,.25);
+}
+.topbar-title { font-size: .8rem; font-weight: 700; color: #fff; letter-spacing: .06em; text-transform: uppercase; }
+.topbar-sub { font-size: .6rem; color: var(--rhyba-teal-light); letter-spacing: .1em; margin-left: auto; }
+.theme-btn { background: rgba(115,181,226,.1); border: 1px solid rgba(115,181,226,.25); border-radius: 4px; color: var(--rhyba-teal-light); font-family: inherit; font-size: .7rem; padding: 4px 10px; cursor: pointer; }
+.size-switcher {
+  display: flex; align-items: center; gap: 1px;
+  background: rgba(115,181,226,.06); border: 1px solid rgba(115,181,226,.2);
+  border-radius: 4px; padding: 2px; margin-left: auto;
+}
+.size-btn {
+  background: none; border: none; border-radius: 3px;
+  color: rgba(115,181,226,.55); cursor: pointer;
+  font-family: 'Montserrat', sans-serif; font-weight: 700;
+  line-height: 1; padding: 3px 5px; transition: background .12s, color .12s;
+}
+.size-btn:hover  { background: rgba(115,181,226,.12); color: var(--rhyba-teal-light); }
+.size-btn.active { background: rgba(115,181,226,.18); color: #fff; }
+
+/* ── layout ── */
+.shell { display: flex; flex: 1; gap: 0; overflow: hidden; }
+.sidebar {
+  width: 200px; flex-shrink: 0;
+  background: var(--bg1); border-right: 1px solid var(--border);
+  padding: 16px 0; display: flex; flex-direction: column; gap: 2px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 18px; font-size: .75rem; font-weight: 500;
+  color: var(--text2); cursor: pointer; border-left: 3px solid transparent;
+  transition: all .12s; text-decoration: none;
+}
+.nav-item:hover { color: var(--text1); background: rgba(115,181,226,.06); }
+.nav-item.active { color: var(--rhyba-teal-light); border-left-color: var(--rhyba-teal-light); background: rgba(115,181,226,.08); font-weight: 700; }
+.nav-icon { font-size: .9rem; width: 18px; text-align: center; }
+.nav-sep { height: 1px; background: var(--border); margin: 8px 12px; }
+.main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+/* ── sections ── */
+.section { display: none; }
+.section.active { display: block; }
+.section-header { margin-bottom: 24px; }
+.section-header h2 { font-size: 1rem; font-weight: 700; color: var(--text1); }
+.section-header p { font-size: .75rem; color: var(--text3); margin-top: 4px; }
+
+/* ── cards ── */
+.card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 20px 22px; margin-bottom: 18px;
+}
+.card-title {
+  font-size: .72rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── form controls ── */
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: .68rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); margin-bottom: 5px; }
+.field input[type="text"], .field input[type="number"], .field select, .field textarea {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text1); font-family: inherit;
+  font-size: .78rem; padding: 7px 10px;
+  transition: border-color .12s;
+}
+.field-input {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text1); font-family: inherit;
+  font-size: .8rem; padding: 8px 10px; box-sizing: border-box;
+  transition: border-color .12s; outline: none;
+}
+.field-input:focus { border-color: rgba(115,181,226,.5); }
+.field-label {
+  display: block; font-size: .68rem; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 5px;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--accent);
+}
+.field textarea { min-height: 80px; resize: vertical; font-size: .72rem; line-height: 1.5; }
+.field .hint { font-size: .65rem; color: var(--text3); margin-top: 4px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* toggle */
+.toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.toggle { position: relative; width: 34px; height: 18px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 18px; cursor: pointer;
+  transition: background .15s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; width: 12px; height: 12px;
+  left: 2px; top: 2px; background: var(--text3);
+  border-radius: 50%; transition: transform .15s, background .15s;
+}
+.toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(16px); background: #fff; }
+.toggle-label { font-size: .75rem; color: var(--text2); }
+
+/* source file list */
+.source-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.source-entry {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 6px 10px; font-size: .73rem;
+}
+.source-entry input { flex: 1; background: none; border: none; color: var(--text1); font-family: inherit; font-size: .73rem; outline: none; }
+.source-entry .ext-badge {
+  font-size: .6rem; font-weight: 700; padding: 2px 6px; border-radius: 3px;
+  background: rgba(115,181,226,.15); color: var(--rhyba-teal-light); flex-shrink: 0;
+}
+.source-entry .btn-remove { background: none; border: none; cursor: pointer; color: var(--text3); font-size: .8rem; padding: 0 2px; border-radius: 3px; transition: color .12s; }
+.source-entry .btn-remove:hover { color: var(--error); }
+.btn-add-source { background: none; border: 1px dashed var(--border); border-radius: 4px; color: var(--text3); font-size: .72rem; padding: 6px 12px; cursor: pointer; width: 100%; transition: all .12s; font-family: inherit; }
+.btn-add-source:hover { border-color: var(--accent); color: var(--rhyba-teal-light); }
+
+/* file scan results */
+.file-scan { margin-top: 10px; }
+.file-scan-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .68rem; color: var(--text2); padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+.file-scan-item:last-child { border-bottom: none; }
+.file-scan-item .fs-ext { width: 44px; font-weight: 700; font-size: .6rem; padding: 1px 5px; border-radius: 3px; text-align: center; }
+.ext-bcf { background: rgba(0,129,177,.2); color: #73b5e2; }
+.ext-xlsx { background: rgba(90,184,122,.2); color: #5ab87a; }
+.ext-vimmrk { background: rgba(224,154,42,.2); color: #e09a2a; }
+.file-scan-item .fs-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-scan-item .fs-size { color: var(--text3); font-size: .62rem; flex-shrink: 0; }
+
+/* discipline / color rows */
+.disc-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.disc-row .disc-prefix { font-size: .75rem; font-weight: 700; width: 24px; text-align: center; }
+.disc-row input[type="text"] { flex: 1; }
+.disc-row input[type="color"] { width: 36px; height: 28px; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; background: var(--bg2); padding: 2px; }
+
+/* KPI checkboxes */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.kpi-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+.kpi-item input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; }
+.kpi-item label { font-size: .72rem; cursor: pointer; }
+
+/* chart list */
+.chart-list { display: flex; flex-direction: column; gap: 8px; }
+.chart-row {
+  display: grid; grid-template-columns: 100px 1fr 80px 28px;
+  gap: 8px; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 8px 10px;
+}
+.chart-row select { font-size: .72rem; padding: 4px 6px; }
+.chart-row input[type="number"] { font-size: .72rem; padding: 4px 6px; }
+
+/* stamp map */
+.stamp-map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.stamp-group-title { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.stamp-entry { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.stamp-entry .stamp-key { font-size: .65rem; font-weight: 700; padding: 2px 6px; border-radius: 3px; flex-shrink: 0; color: #fff; min-width: 36px; text-align: center; }
+.stamp-entry input { flex: 1; font-size: .72rem; padding: 4px 7px; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 4px; font-family: inherit; font-size: .75rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all .12s; text-decoration: none; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: #0091c8; }
+.btn-secondary { background: var(--bg3); border-color: var(--border); color: var(--text1); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--rhyba-teal-light); }
+.btn-danger { background: rgba(224,92,92,.1); border-color: var(--error); color: var(--error); }
+.btn-success { background: var(--success); border-color: var(--success); color: #fff; }
+.btn-lg { font-size: .85rem; padding: 11px 24px; }
+.btn-bar { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+
+/* build area */
+.build-status { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 4px; font-size: .75rem; margin-bottom: 12px; }
+.build-status.idle    { background: var(--bg2); color: var(--text3); border: 1px solid var(--border); }
+.build-status.running { background: rgba(0,129,177,.1); color: var(--rhyba-teal-light); border: 1px solid var(--accent); }
+.build-status.done    { background: rgba(90,184,122,.1); color: var(--success); border: 1px solid var(--success); }
+.build-status.error   { background: rgba(224,92,92,.1); color: var(--error); border: 1px solid var(--error); }
+.spinner { width: 14px; height: 14px; border: 2px solid rgba(115,181,226,.3); border-top-color: var(--rhyba-teal-light); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.build-log {
+  background: var(--bg0); border: 1px solid var(--border); border-radius: 4px;
+  padding: 12px 14px; font-family: 'Courier New', monospace;
+  font-size: .68rem; color: var(--text2); line-height: 1.6;
+  max-height: 320px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+}
+.dashboard-link {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  font-size: .78rem; color: var(--text1); text-decoration: none; margin-top: 14px;
+  transition: all .12s;
+}
+.dashboard-link:hover { border-color: var(--accent); }
+.dashboard-meta { font-size: .65rem; color: var(--text3); margin-left: auto; }
+
+/* toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 5px; padding: 10px 16px; font-size: .75rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4); z-index: 9999;
+  animation: toast-in .2s ease;
+  display: flex; align-items: center; gap: 8px;
+}
+@keyframes toast-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; } }
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error   { border-color: var(--error); color: var(--error); }
+</style>
+</head>
+<body>
+
+<!-- file:// warning banner -->
+<div id="file-warning" style="display:none;background:#e09a2a;color:#000;font-size:.8rem;font-weight:600;
+     padding:10px 20px;text-align:center;position:sticky;top:0;z-index:9999">
+  ⚠ Open via the admin server, not by double-clicking the file:
+  <a id="server-link" href="http://localhost:SERVER_PORT_PLACEHOLDER"
+     style="color:#000;margin-left:8px;text-decoration:underline">
+    http://localhost:SERVER_PORT_PLACEHOLDER
+  </a>
+  &nbsp;— or the build and file links will not work.
+</div>
+
+<!-- topbar -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <svg width="80" height="34" viewBox="0 0 36.23 15.95" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="1.471" cy="8.244" r="1.238" stroke="#73b5e2" stroke-width="0.32" fill="none"/>
+      <circle cx="9.387" cy="2.720" r="1.238" stroke="#73b5e2" stroke-width="0.32" fill="none"/>
+      <path d="M 8.256,2.185 C 5.085,2.068 2.209,4.033 1.165,7.030" stroke="#73b5e2" stroke-width="0.38" fill="none" stroke-linecap="round"/>
+      <circle cx="0.243" cy="8.096" r="0.222" fill="#73b5e2"/>
+      <circle cx="1.513" cy="8.244" r="0.243" fill="#73b5e2"/>
+      <circle cx="9.832" cy="0.159" r="0.138" fill="#73b5e2"/>
+      <circle cx="9.705" cy="0.942" r="0.138" fill="#73b5e2"/>
+      <circle cx="9.028" cy="4.413" r="0.138" fill="#73b5e2"/>
+      <circle cx="8.901" cy="5.175" r="0.138" fill="#73b5e2"/>
+      <circle cx="9.620" cy="4.858" r="0.138" fill="#73b5e2"/>
+      <circle cx="10.340" cy="5.154" r="0.138" fill="#73b5e2"/>
+      <circle cx="10.996" cy="5.577" r="0.138" fill="#73b5e2"/>
+      <circle cx="8.287" cy="4.604" r="0.138" fill="#73b5e2"/>
+      <circle cx="7.525" cy="4.625" r="0.138" fill="#73b5e2"/>
+      <circle cx="6.763" cy="4.773" r="0.138" fill="#73b5e2"/>
+      <circle cx="6.043" cy="5.027" r="0.138" fill="#73b5e2"/>
+      <circle cx="5.366" cy="5.387" r="0.138" fill="#73b5e2"/>
+      <circle cx="4.752" cy="5.874" r="0.138" fill="#73b5e2"/>
+      <circle cx="4.223" cy="6.424" r="0.138" fill="#73b5e2"/>
+      <circle cx="3.778" cy="7.059" r="0.138" fill="#73b5e2"/>
+      <circle cx="3.440" cy="7.779" r="0.138" fill="#73b5e2"/>
+      <circle cx="3.207" cy="8.498" r="0.138" fill="#73b5e2"/>
+      <circle cx="3.080" cy="9.260" r="0.138" fill="#73b5e2"/>
+      <circle cx="3.080" cy="10.044" r="0.138" fill="#73b5e2"/>
+      <circle cx="3.207" cy="10.827" r="0.138" fill="#73b5e2"/>
+      <circle cx="3.440" cy="11.568" r="0.138" fill="#73b5e2"/>
+      <circle cx="3.778" cy="12.266" r="0.138" fill="#73b5e2"/>
+      <circle cx="4.223" cy="12.901" r="0.138" fill="#73b5e2"/>
+      <circle cx="4.752" cy="13.473" r="0.138" fill="#73b5e2"/>
+      <circle cx="5.366" cy="13.938" r="0.138" fill="#73b5e2"/>
+      <text x="8.5" y="11.0" font-family="Montserrat,sans-serif" font-weight="700" font-size="5.2" fill="white" letter-spacing="0.25">RHYBA</text>
+      <text x="8.0" y="15.3" font-family="Montserrat,sans-serif" font-weight="400" font-size="1.9" fill="#73b5e2" letter-spacing="0.55">ENGINEERING</text>
+    </svg>
+  </div>
+  <span class="topbar-title">BCF Dashboard Admin</span>
+  <div class="size-switcher" title="Text size">
+    <button class="size-btn" data-size="small"  onclick="setAdminSize('small')"  title="Small">S</button>
+    <button class="size-btn active" data-size="normal" onclick="setAdminSize('normal')" title="Normal">A</button>
+    <button class="size-btn" data-size="medium" onclick="setAdminSize('medium')" title="Medium">A</button>
+    <button class="size-btn" data-size="large"  onclick="setAdminSize('large')"  title="Large">A</button>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()">Light/Dark</button>
+  
+</header>
+
+<div class="shell">
+  <!-- sidebar -->
+  <nav class="sidebar">
+    <a class="nav-item active" data-section="build"       onclick="showSection('build',this)"><span class="nav-icon">▶</span>Build</a>
+    <a class="nav-item" data-section="sources"    onclick="showSection('sources',this)"><span class="nav-icon">📂</span>Source Files</a>
+    <div class="nav-sep"></div>
+    <a class="nav-item" data-section="general"    onclick="showSection('general',this)"><span class="nav-icon">⚙</span>General</a>
+    <a class="nav-item" data-section="spatial"    onclick="showSection('spatial',this)"><span class="nav-icon">📍</span>Spatial Priority</a>
+    <a class="nav-item" data-section="disciplines" onclick="showSection('disciplines',this)"><span class="nav-icon">🏷</span>Disciplines</a>
+    <a class="nav-item" data-section="colors"     onclick="showSection('colors',this)"><span class="nav-icon">🎨</span>Colors</a>
+    <a class="nav-item" data-section="layout"     onclick="showSection('layout',this)"><span class="nav-icon">📊</span>Layout</a>
+    <a class="nav-item" data-section="filters"    onclick="showSection('filters',this)"><span class="nav-icon">🔍</span>Filters</a>
+    <div class="nav-sep"></div>
+    <a class="nav-item" data-section="stamps"     onclick="showSection('stamps',this)"><span class="nav-icon">🗺</span>Stamp Mapping</a>
+    <a class="nav-item" data-section="docmgt"     onclick="showSection('docmgt',this)"><span class="nav-icon">📋</span>Document Management</a>
+    <a class="nav-item" data-section="engdocs"    onclick="showSection('engdocs',this)"><span class="nav-icon">⚙</span>Engineering Docs</a>
+    <a class="nav-item" data-section="mto"        onclick="showSection('mto',this)"><span class="nav-icon">📐</span>MTO</a>
+    <a class="nav-item" data-section="scope"      onclick="showSection('scope',this)"><span class="nav-icon">&#9654;</span>Scope</a>
+    <a class="nav-item" data-section="costs"      onclick="showSection('costs',this)"><span class="nav-icon">💰</span>Costs</a>
+  </nav>
+
+  <!-- main content -->
+  <main class="main">
+
+    <!-- BUILD -->
+    <section class="section active" id="sec-build">
+      <div class="section-header">
+        <h2>Build</h2>
+        <p><strong>Build Data</strong> — täglich (neue BCF/XLSX Exporte). &nbsp;|&nbsp; Dashboard-Shell wird von RHYBA Engineering bereitgestellt.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--accent)">
+        <div class="card-title">ℹ️ Dashboard-Build</div>
+        <p style="color:var(--text2);font-size:.85rem;margin:0 0 8px">
+          Das Dashboard-Shell (<code>index.html</code>) wird von <strong>RHYBA Engineering</strong> vorbereitet und mit einer gültigen Lizenz signiert.<br>
+          Sie können <code>index.html</code> nicht lokal neu bauen — die Lizenzsignatur erfordert den RHYBA-Signing-Key.<br><br>
+          Für neue Features, Layout-Änderungen oder Lizenz-Erneuerungen kontaktieren Sie bitte:<br>
+          <a href="mailto:thomas.weber@rhyba-engineering.com" style="color:var(--accent)">thomas.weber@rhyba-engineering.com</a>
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title">Daten-Build (data.js)</div>
+        <div class="build-status idle" id="build-status-bar">
+          <span>⬤</span><span id="build-status-text">Bereit</span>
+        </div>
+        <div class="build-log" id="build-log">Klicken Sie auf "Build Data", um neue Projektdaten zu kompilieren.</div>
+        <div class="btn-bar">
+          <a class="btn btn-secondary" href="http://localhost:SERVER_PORT_PLACEHOLDER/dashboard" target="_blank" id="link-dashboard">Dashboard öffnen ↗</a>
+        </div>
+        <div id="dashboard-info"></div>
+      </div>
+
+      <!-- ── DATA BUILD ── -->
+      <div class="card" style="border-left:3px solid #1D9E75;margin-top:0">
+        <div class="card-title" style="color:#1D9E75">
+          ⚡ Build Data
+          <span style="font-weight:400;color:#607880;font-size:.8rem"> — build_data.py</span>
+        </div>
+        <p style="font-size:.82rem;color:#8aacba;margin:0 0 14px">
+          Parses BCF / XLSX / MTO / Costs / Scope → <code>data.js</code>.
+          Runs in ~2–5 s. Deploy daily alongside <code>dashboard.html</code>.
+        </p>
+
+        <div class="field">
+          <label>Data password</label>
+          <div style="display:flex;gap:8px">
+            <input type="password" id="cfg-data-password"
+                   placeholder="Enter encryption password for data.js"
+                   style="flex:1">
+            <button class="btn btn-secondary" onclick="saveDataPassword()">Save</button>
+          </div>
+          <span class="hint">Saved as <code>data_password</code> in config.yaml and used by build_data.py.</span>
+        </div>
+
+        <div class="field">
+          <label>Output file</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="cfg-data-output" placeholder="data.js" style="flex:1">
+            <button class="btn btn-secondary" onclick="saveDataOutput()">Save</button>
+          </div>
+          <span class="hint">Relative to project root. Deploy this file alongside dashboard.html.</span>
+        </div>
+
+        <div id="data-file-info" style="font-size:.78rem;color:#5a7a8a;margin:4px 0 12px;min-height:1.2rem"></div>
+
+        <div class="btn-bar">
+          <button class="btn btn-primary btn-lg" onclick="startDataBuild()"
+                  id="btn-data-build" style="background:#1D9E75">⚡ Build Data</button>
+          <button class="btn btn-secondary" style="margin-left:8px"
+                  onclick="dataAndPush()">Build Data &amp; Push</button>
+          <button class="btn btn-secondary" style="margin-left:8px"
+                  onclick="pushDataOnly()">Push data.js only</button>
+        </div>
+      </div>
+
+      <!-- GIT / DEPLOY PANEL -->
+      <div class="card" id="git-card" style="margin-top:16px">
+        <div class="card-title">Git / Azure Deploy</div>
+        <div id="git-status-line" style="font-size:.75rem;padding:6px 0;color:#888">Checking git status...</div>
+        <div style="display:flex;align-items:center;gap:10px;margin:8px 0 12px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer;user-select:none">
+            <input type="checkbox" id="auto-push-toggle" onchange="setAutoPush(this.checked)">
+            Auto-push to GitHub after every successful build
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="commit-msg" placeholder="Commit message (optional — auto-generated if empty)"
+            style="flex:1;min-width:220px;padding:6px 10px;border-radius:4px;
+                   border:1px solid var(--border-color,#333);background:var(--card-bg,#1a1a2e);
+                   color:inherit;font-family:inherit;font-size:.8rem">
+          <button class="btn btn-secondary" onclick="manualPush()">Push to GitHub now</button>
+        </div>
+        <p style="font-size:.68rem;color:#666;margin-top:8px;line-height:1.5">
+          Commits <code>dashboard.html</code> and pushes to the configured GitHub remote,
+          which triggers the Azure Static Web Apps deployment automatically.
+          Requires Git on PATH and an <code>origin</code> remote set up in this folder.
+        </p>
+        <div id="git-log-wrap" style="display:none;margin-top:10px">
+          <div style="font-size:.7rem;color:var(--text3);margin-bottom:4px">Git output:</div>
+          <pre id="git-log-output"
+            style="background:#0a0a0f;border:1px solid var(--border-color,#333);
+              border-radius:4px;padding:10px;font-size:.67rem;line-height:1.5;
+              max-height:220px;overflow-y:auto;white-space:pre-wrap;color:#8fa;margin:0"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOURCE FILES -->
+    <section class="section" id="sec-sources">
+      <div class="section-header">
+        <h2>Source Files</h2>
+        <p>Glob patterns for BCF, XLSX, and VIMMRK files to include in the build. Use absolute paths or paths relative to the build_dashboard.py folder.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">bcf_sources — File Patterns</div>
+        <div class="source-list" id="source-list"></div>
+        <button class="btn-add-source" onclick="addSourceEntry()">+ Add pattern</button>
+        <div class="btn-bar">
+          <button class="btn btn-primary" onclick="saveSources()">Save patterns</button>
+          <button class="btn btn-secondary" onclick="scanSources()">Scan files</button>
+        </div>
+      </div>
+      <div class="card" id="scan-card" style="display:none">
+        <div class="card-title">Files found</div>
+        <div id="scan-results"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">MS Project XML — Variance Gantt</div>
+        <div class="field">
+          <label>msp_xml_path</label>
+          <input type="text" id="cfg-msp-xml" placeholder="./project/EPC_Plant.xml or C:/Projects/plan.xml">
+          <span class="hint">Absolute or relative path to your MS Project XML export. Parsed at build time — re-run build after updating your plan. Leave blank to show BCF-only Gantt (no planned bars).</span>
+        </div>
+        <div class="btn-bar">
+          <button class="btn btn-secondary" onclick="saveMspXml(false)">Save</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GENERAL -->
+    <section class="section" id="sec-general">
+      <div class="section-header">
+        <h2>General Settings</h2>
+        <p>Dashboard title, theme, and snapshot configuration.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Dashboard</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Title</label>
+            <input type="text" id="cfg-title" placeholder="BCF Coordination Dashboard">
+          </div>
+          <div class="field">
+            <label>Subtitle</label>
+            <input type="text" id="cfg-subtitle" placeholder="Plant Engineering — 3D Model Review">
+          </div>
+        </div>
+        <div class="field">
+          <label>Default theme</label>
+          <select id="cfg-theme">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Snapshots</div>
+        <div class="toggle-row">
+          <label class="toggle"><input type="checkbox" id="cfg-snap-enabled"><span class="toggle-slider"></span></label>
+          <span class="toggle-label">Enable snapshot embedding</span>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle"><input type="checkbox" id="cfg-snap-fullsize"><span class="toggle-slider"></span></label>
+          <span class="toggle-label">Save full-size images to ./bcf_assets/</span>
+        </div>
+        <div class="field-row3">
+          <div class="field">
+            <label>Thumb width (px)</label>
+            <input type="number" id="cfg-snap-w" min="100" max="1920" step="10">
+          </div>
+          <div class="field">
+            <label>Thumb height (px)</label>
+            <input type="number" id="cfg-snap-h" min="100" max="1080" step="10">
+          </div>
+          <div class="field">
+            <label>JPEG quality (1–95)</label>
+            <input type="number" id="cfg-snap-q" min="1" max="95" step="1">
+          </div>
+        </div>
+      </div>
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveGeneral(false)">Save</button>
+      </div>
+    </section>
+
+    <!-- DISCIPLINES -->
+    
+    <!-- SPATIAL PRIORITY -->
+    <section class="section" id="sec-spatial">
+
+      <div class="section-header">
+        <h2>Spatial Field Priority</h2>
+        <p>For the <b>Location</b> filter and chart, the first non-empty field wins per issue. Drag rows to reorder.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Field priority order</div>
+        <p style="font-size:.72rem;color:var(--text2);margin:0 0 12px">
+          Available fields: <code>room</code>, <code>space</code>, <code>zone</code>, <code>area</code>, <code>level</code>, <code>grid_location</code>
+        </p>
+        <div id="spatial-priority-list" style="display:flex;flex-direction:column;gap:4px;max-width:360px;margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="spatial-add-field" style="padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:.75rem;font-family:inherit">
+            <option value="room">room</option>
+            <option value="space">space</option>
+            <option value="zone">zone</option>
+            <option value="area">area</option>
+            <option value="level">level</option>
+            <option value="grid_location">grid_location</option>
+          </select>
+          <button class="btn-secondary" onclick="spatialAddField()">+ Add field</button>
+          <button class="btn-secondary" onclick="spatialReset()">Reset to default</button>
+          <button class="btn-secondary" onclick="saveSpatialPriority()">💾 Save</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- DISCIPLINES -->
+    <section class="section" id="sec-disciplines">
+<div class="section-header">
+        <h2>Disciplines</h2>
+        <p>Map stamp prefix letters to full discipline names and colours.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">discipline_map &amp; discipline_colors</div>
+        <div id="disc-list"></div>
+        <button class="btn-add-source" onclick="addDiscEntry()" style="margin-top:8px">+ Add discipline</button>
+      </div>
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveDisciplines(false)">Save</button>
+      </div>
+    </section>
+
+    <!-- LAYOUT -->
+    <section class="section" id="sec-colors">
+      <div class="section-header">
+        <h2>Global Colors</h2>
+        <p>Colors used across all tabs — issue badges, chart segments, filter pills, document status indicators.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Issue Status Colors</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:12px">Applied to status badges, chart slices, and filter pills on all tabs.</p>
+        <div id="color-status-list" class="color-swatch-grid"></div>
+        <button class="btn-add-source" onclick="_addColorRow('status')" style="margin-top:8px">+ Add status</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Priority Colors</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:12px">Applied to priority badges and chart segments.</p>
+        <div id="color-priority-list" class="color-swatch-grid"></div>
+        <button class="btn-add-source" onclick="_addColorRow('priority')" style="margin-top:8px">+ Add priority</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Document Status Colors</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:12px">Applied to document management KPIs, source bars, and register badges.</p>
+        <div id="color-docstatus-list" class="color-swatch-grid"></div>
+        <button class="btn-add-source" onclick="_addColorRow('docstatus')" style="margin-top:8px">+ Add doc status</button>
+      </div>
+
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveColors(false)">Save</button>
+      </div>
+    </section>
+
+    <section class="section" id="sec-layout">
+      <div class="section-header">
+        <h2>Dashboard Layout</h2>
+        <p>Drag tiles to reorder. Click to toggle KPIs. Configure table columns. Saves to config.yaml.</p>
+      </div>
+
+      <!-- KPI ROW -->
+      <div class="card">
+        <div class="card-title">KPI Cards</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:10px">Click to toggle on/off. Drag to reorder.</p>
+        <div id="kpi-grid" class="kpi-builder-row"></div>
+      </div>
+
+      <!-- CHART CANVAS -->
+      <div class="card">
+        <div class="card-title">Chart Grid</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:10px">
+          Drag tiles to reorder. Click ✕ to remove. Add from palette below.
+        </p>
+        <div id="chart-canvas" class="lb-chart-canvas"></div>
+        <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:8px">Palette — click to add</div>
+          <div id="chart-palette" class="lb-chart-palette"></div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card">
+        <div class="card-title">Table Columns</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:8px">Drag to reorder. ✕ to remove. Click pool item to add.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+          <div style="flex:1;min-width:240px">
+            <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px">Active</div>
+            <div id="tbl-active" class="lb-col-row"></div>
+          </div>
+          <div style="flex:1;min-width:240px">
+            <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px">Available</div>
+            <div id="tbl-pool" class="lb-col-row lb-col-pool"></div>
+          </div>
+        </div>
+        <div class="field-row3" style="margin-top:14px">
+          <div class="field">
+            <label>Default sort</label>
+            <select id="tbl-sort"></select>
+          </div>
+          <div class="field">
+            <label>Sort direction</label>
+            <select id="tbl-dir">
+              <option value="asc">Ascending ↑</option>
+              <option value="desc">Descending ↓</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Page size</label>
+            <input type="number" id="tbl-page" min="5" max="200" step="5">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveLayout(false)">Save</button>
+      </div>
+    </section>
+
+    <!-- FILTERS -->
+    <section class="section" id="sec-filters">
+      <div class="section-header">
+        <h2>Pre-filters</h2>
+        <p>Only issues matching ALL conditions are loaded. Leave blank to include everything.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Build-time filters</div>
+        <div class="field">
+          <label>Status (comma-separated, blank = all)</label>
+          <input type="text" id="filt-status" placeholder="Open, In Progress">
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <input type="text" id="filt-type" placeholder="">
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <input type="text" id="filt-priority" placeholder="">
+        </div>
+        <div class="field">
+          <label>Label include (issue must have at least one)</label>
+          <input type="text" id="filt-include" placeholder="">
+        </div>
+        <div class="field">
+          <label>Label exclude (issues with any of these are excluded)</label>
+          <input type="text" id="filt-exclude" placeholder="">
+        </div>
+      </div>
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveFilters(false)">Save</button>
+      </div>
+    </section>
+
+    <!-- STAMP MAPPING -->
+    <section class="section" id="sec-stamps">
+      <div class="section-header">
+        <h2>Stamp → WBS Mapping</h2>
+        <p>Map Revizto stamp codes to MS Project task names. These are used by the WBS Macro export.</p>
+      </div>
+      <div id="stamp-map-container"></div>
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveStamps(false)">Save</button>
+      </div>
+    </section>
+
+    <!-- DOCUMENT MANAGEMENT -->
+    <section class="section" id="sec-docmgt">
+      <div class="section-header">
+        <h2>Document Management</h2>
+        <p class="section-desc">Configure document sources cross-referenced against the master register.</p>
+      </div>
+      <div class="card">
+
+        <!-- Master Register -->
+        <div style="margin-bottom:20px">
+          <div class="field-label" style="margin-bottom:6px;font-weight:700">Master Document Register</div>
+          <div style="display:grid;grid-template-columns:3fr 1fr;gap:10px">
+            <div>
+              <div class="field-label">File Path</div>
+              <input id="doc-master-path" class="field-input" type="text"
+                placeholder="./exports/docregister/master_register.xlsx">
+            </div>
+            <div>
+              <div class="field-label">Sheet Name</div>
+              <input id="doc-master-sheet" class="field-input" type="text"
+                placeholder="Master Register">
+            </div>
+          </div>
+        </div>
+
+        <!-- Source toggle cards -->
+        <div class="field-label" style="margin-bottom:8px;font-weight:700">Document Sources</div>
+        <div id="doc-sources-list" style="display:flex;flex-direction:column;gap:12px"></div>
+
+        <div style="margin-top:16px">
+          <button class="theme-btn" onclick="saveDocMgt()">Save Document Management Config</button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ENGINEERING DOCS -->
+    <section class="section" id="sec-engdocs">
+      <div class="section-header">
+        <h2>Engineering Documents</h2>
+        <p>Asset register source for the Engineering Documents tab (pipe list, vessels, pumps, valves, instruments).</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Asset Register (XLSX)</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:12px">
+          One row per asset. Required columns: Tag Number, Description, Equipment Type, Discipline.<br>
+          Optional: Nominal Diameter, Pressure Rating, Pipe Class, Medium, Design Temperature, Material, Insulation, P&amp;ID Reference, Isometry Number, Line List Number.
+        </p>
+        <div class="field">
+          <label>XLSX path</label>
+          <input type="text" id="eng-path" placeholder="./exports/engineering/asset_register.xlsx">
+        </div>
+        <div class="field">
+          <label>Sheet name (blank = first sheet)</label>
+          <input type="text" id="eng-sheet" placeholder="Assets">
+        </div>
+        <div class="card-title" style="margin-top:16px">Column mapping</div>
+        <div class="field-row3">
+          <div class="field"><label>Tag Number</label><input type="text" id="eng-col-tag" placeholder="Tag Number"></div>
+          <div class="field"><label>Description</label><input type="text" id="eng-col-desc" placeholder="Description"></div>
+          <div class="field"><label>Equipment Type</label><input type="text" id="eng-col-type" placeholder="Equipment Type"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Discipline</label><input type="text" id="eng-col-disc" placeholder="Discipline"></div>
+          <div class="field"><label>Nominal Diameter</label><input type="text" id="eng-col-dn" placeholder="Nominal Diameter"></div>
+          <div class="field"><label>Pressure Rating</label><input type="text" id="eng-col-pn" placeholder="Pressure Rating"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Pipe Class</label><input type="text" id="eng-col-class" placeholder="Pipe Class"></div>
+          <div class="field"><label>Medium</label><input type="text" id="eng-col-medium" placeholder="Medium"></div>
+          <div class="field"><label>Design Temperature</label><input type="text" id="eng-col-temp" placeholder="Design Temperature"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Material</label><input type="text" id="eng-col-mat" placeholder="Material"></div>
+          <div class="field"><label>Insulation</label><input type="text" id="eng-col-insul" placeholder="Insulation"></div>
+          <div class="field"><label>P&amp;ID Reference</label><input type="text" id="eng-col-pid" placeholder="P&ID Reference"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Isometry Number</label><input type="text" id="eng-col-iso" placeholder="Isometry Number"></div>
+          <div class="field"><label>Line List Number</label><input type="text" id="eng-col-line" placeholder="Line List Number"></div>
+          <div class="field"></div>
+        </div>
+      </div>
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveEngDocs(false)">Save</button>
+      </div>
+    </section>
+
+    <!-- MTO -->
+    <section class="section" id="sec-mto">
+      <div class="section-header">
+        <h2>MTO (Material Take-Off)</h2>
+        <p>Isometry register and fittings list for revision comparison in the Engineering Documents tab.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Revision Labels</div>
+        <div class="field-row3">
+          <div class="field"><label>Base revision label</label><input type="text" id="mto-rev-base" placeholder="Rev A"></div>
+          <div class="field"><label>Compare revision label</label><input type="text" id="mto-rev-cmp" placeholder="Rev B"></div>
+          <div class="field"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Isometry Register (XLSX)</div>
+        <div class="field">
+          <label>XLSX path</label>
+          <input type="text" id="mto-iso-path" placeholder="./exports/mto/iso_register.xlsx">
+        </div>
+        <div class="field"><label>Sheet</label><input type="text" id="mto-iso-sheet" placeholder="Isometries"></div>
+        <div class="card-title" style="margin-top:12px">Columns</div>
+        <div class="field-row3">
+          <div class="field"><label>ISO Number</label><input type="text" id="mto-iso-col-num" placeholder="ISO Number"></div>
+          <div class="field"><label>Discipline</label><input type="text" id="mto-iso-col-disc" placeholder="Discipline"></div>
+          <div class="field"><label>Line Number</label><input type="text" id="mto-iso-col-line" placeholder="Line Number"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Base revision length (mm)</label><input type="text" id="mto-iso-col-base" placeholder="Rev A Length (mm)"></div>
+          <div class="field"><label>Compare revision length (mm)</label><input type="text" id="mto-iso-col-cmp" placeholder="Rev B Length (mm)"></div>
+          <div class="field"><label>Status</label><input type="text" id="mto-iso-col-stat" placeholder="Status"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Fittings &amp; Bulk Materials (XLSX)</div>
+        <div class="field"><label>XLSX path</label><input type="text" id="mto-fit-path" placeholder="./exports/mto/fittings.xlsx"></div>
+        <div class="field"><label>Sheet</label><input type="text" id="mto-fit-sheet" placeholder="Fittings"></div>
+        <div class="card-title" style="margin-top:12px">Columns</div>
+        <div class="field-row3">
+          <div class="field"><label>Description</label><input type="text" id="mto-fit-col-desc" placeholder="Description"></div>
+          <div class="field"><label>DN</label><input type="text" id="mto-fit-col-dn" placeholder="DN"></div>
+          <div class="field"><label>Material</label><input type="text" id="mto-fit-col-mat" placeholder="Material"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Base qty</label><input type="text" id="mto-fit-col-qbase" placeholder="Qty Rev A"></div>
+          <div class="field"><label>Compare qty</label><input type="text" id="mto-fit-col-qcmp" placeholder="Qty Rev B"></div>
+          <div class="field"><label>Unit</label><input type="text" id="mto-fit-col-unit" placeholder="Unit"></div>
+        </div>
+      </div>
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveMto(false)">Save</button>
+      </div>
+    </section>
+
+    <!-- SCOPE -->
+    <section class="section" id="sec-scope">
+      <div class="section-header">
+        <h2>Scope Register</h2>
+        <p>XLSX register of planned process systems, disciplines, companies and required document types.
+           Cross-referenced against Document Management to show coverage gaps.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Source File</div>
+        <div class="field">
+          <label>XLSX path</label>
+          <input type="text" id="scope-path" placeholder="./exports/scope/scope_register.xlsx">
+        </div>
+        <div class="field">
+          <label>Sheet name (blank = first sheet)</label>
+          <input type="text" id="scope-sheet" placeholder="Scope">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Column Mapping</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:12px">
+          Each row = one document type required for a system/discipline combination.<br>
+          One row per system × doc type. Systems without a row for a doc type are treated as "not in scope".
+        </p>
+        <div class="field-row3">
+          <div class="field"><label>System Code</label><input type="text" id="scope-col-code" placeholder="System Code"></div>
+          <div class="field"><label>System Name</label><input type="text" id="scope-col-name" placeholder="System Name"></div>
+          <div class="field"><label>Discipline</label><input type="text" id="scope-col-disc" placeholder="Discipline"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Company / Planner</label><input type="text" id="scope-col-co" placeholder="Company"></div>
+          <div class="field"><label>Area</label><input type="text" id="scope-col-area" placeholder="Area"></div>
+          <div class="field"><label>Document Type</label><input type="text" id="scope-col-doctype" placeholder="Document Type"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Required (YES/NO/X)</label><input type="text" id="scope-col-req" placeholder="Required"></div>
+          <div class="field"><label>Document Number (optional link)</label><input type="text" id="scope-col-docnum" placeholder="Document Number"></div>
+          <div class="field"></div>
+        </div>
+      </div>
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveScope(false)">Save</button>
+      </div>
+    </section>
+
+    <!-- COSTS -->
+    <section class="section" id="sec-costs">
+      <div class="section-header">
+        <h2>Costs</h2>
+        <p>WBS cost data for the Costs tab. Supports XLSX file exports from SAP, Primavera, or any ERP system.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">General</div>
+        <div class="field-row3">
+          <div class="field">
+            <label>Currency</label>
+            <input type="text" id="costs-currency" placeholder="CHF" style="max-width:100px">
+          </div>
+          <div class="field">
+            <label>Data source</label>
+            <select id="costs-source">
+              <option value="xlsx">XLSX / CSV file (SAP export, ERP, manual)</option>
+              <option value="mock">Mock data (demo / no source)</option>
+            </select>
+          </div>
+          <div class="field"></div>
+        </div>
+      </div>
+      <div class="card" id="costs-xlsx-card">
+        <div class="card-title">Actuals / Budget (XLSX)</div>
+        <p style="font-size:.7rem;color:var(--text3);margin-bottom:12px">
+          Export from SAP (transaction S_ALR_87013019 or MB51), Primavera, or any ERP. One row per WBS element.
+        </p>
+        <div class="field"><label>XLSX path</label><input type="text" id="costs-act-path" placeholder="./exports/costs/actual_costs.xlsx"></div>
+        <div class="field"><label>Sheet</label><input type="text" id="costs-act-sheet" placeholder="Actuals"></div>
+        <div class="card-title" style="margin-top:12px">Columns</div>
+        <div class="field-row3">
+          <div class="field"><label>WBS Element</label><input type="text" id="costs-col-wbs" placeholder="WBS Element"></div>
+          <div class="field"><label>Description</label><input type="text" id="costs-col-desc" placeholder="Description"></div>
+          <div class="field"><label>Budget</label><input type="text" id="costs-col-budget" placeholder="Budget"></div>
+        </div>
+        <div class="field-row3">
+          <div class="field"><label>Actual</label><input type="text" id="costs-col-actual" placeholder="Actual Costs"></div>
+          <div class="field"><label>Committed</label><input type="text" id="costs-col-committed" placeholder="Committed"></div>
+          <div class="field"></div>
+        </div>
+      </div>
+      <div class="card" id="costs-scurve-card">
+        <div class="card-title">S-Curve / Burn-down (XLSX) <span style="font-size:.65rem;color:var(--text3);font-weight:400">— optional</span></div>
+        <div class="field"><label>XLSX path</label><input type="text" id="costs-sc-path" placeholder="./exports/costs/scurve.xlsx"></div>
+        <div class="field"><label>Sheet</label><input type="text" id="costs-sc-sheet" placeholder="S-Curve"></div>
+        <div class="field-row3">
+          <div class="field"><label>Date column</label><input type="text" id="costs-sc-col-date" placeholder="Date"></div>
+          <div class="field"><label>Actual cumulative</label><input type="text" id="costs-sc-col-act" placeholder="Actual Cumulative"></div>
+          <div class="field"><label>Planned cumulative</label><input type="text" id="costs-sc-col-plan" placeholder="Planned Cumulative"></div>
+        </div>
+        <div class="field"><label>Forecast column</label><input type="text" id="costs-sc-col-fc" placeholder="Forecast"></div>
+      </div>
+      <div class="btn-bar">
+        <button class="btn btn-secondary" onclick="saveCosts(false)">Save</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ── Document Management config ───────────────────────────────────
+async function loadDocMgt() {
+  try {
+    const cfg = await apiGet('/api/config');
+    const dm  = cfg.doc_management || {};
+    const mr  = dm.master_register || {};
+    const el  = id => document.getElementById(id);
+    if (el('doc-master-path'))  el('doc-master-path').value  = mr.path  || '';
+    if (el('doc-master-sheet')) el('doc-master-sheet').value = mr.sheet || '';
+
+    // Render source cards
+    const srcs = dm.sources || {};
+    const list = el('doc-sources-list');
+    if (!list) return;
+    list.innerHTML = '';
+    const srcDefs = [
+      { key:'sharepoint', label:'SharePoint', icon:'📄', defaultPath:'./exports/docregister/sharepoint_export.xlsx' },
+      { key:'pid',        label:'P&ID (AutoCAD Plant 3D)', icon:'📐', defaultPath:'./exports/docregister/pid_export.xlsx' },
+      { key:'navisworks', label:'3D Model (Navisworks)',   icon:'🏗️',  defaultPath:'./exports/docregister/navisworks_export.xlsx' },
+    ];
+    srcDefs.forEach(def => {
+      const src  = srcs[def.key] || {};
+      const cols = src.columns || {};
+      const srcType = src.source_type || 'file';   // 'file' | 'sharepoint_live'
+      const isLive  = srcType === 'sharepoint_live';
+      const card = document.createElement('div');
+      card.style.cssText = 'background:var(--card-bg,#13131a);border:1px solid var(--border-color,#2a2a3a);border-radius:6px;padding:14px';
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:1.1rem">${def.icon}</span>
+            <span style="font-weight:700;font-size:.85rem">${def.label}</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.75rem">
+            <input type="checkbox" id="doc-${def.key}-enabled"
+              ${src.enabled !== false ? 'checked' : ''}>
+            Enabled
+          </label>
+        </div>
+
+        <!-- Source type -->
+        <div style="margin-bottom:12px">
+          <div class="field-label">Source type</div>
+          <div style="display:flex;gap:16px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer">
+              <input type="radio" name="doc-${def.key}-srctype" value="file"
+                ${!isLive ? 'checked' : ''}
+                onchange="docToggleSourceType('${def.key}')">
+              File import (XLSX / CSV)
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:.75rem;cursor:pointer;${def.key !== 'sharepoint' ? 'opacity:.5' : ''}">
+              <input type="radio" name="doc-${def.key}-srctype" value="sharepoint_live"
+                ${isLive ? 'checked' : ''}
+                ${def.key !== 'sharepoint' ? 'disabled' : ''}
+                onchange="docToggleSourceType('${def.key}')">
+              SharePoint live query ${def.key !== 'sharepoint' ? '<small>(SharePoint only)</small>' : ''}
+            </label>
+          </div>
+        </div>
+
+        <!-- File import fields -->
+        <div id="doc-${def.key}-file-fields" ${isLive ? 'style="display:none"' : ''}>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <div class="field-label">File Path</div>
+              <input id="doc-${def.key}-path" class="field-input" type="text"
+                value="${src.path || def.defaultPath}" placeholder="${def.defaultPath}">
+            </div>
+            <div>
+              <div class="field-label">Sheet Name</div>
+              <input id="doc-${def.key}-sheet" class="field-input" type="text"
+                value="${src.sheet || ''}" placeholder="Sheet1">
+            </div>
+          </div>
+          <details style="margin-top:6px">
+            <summary style="font-size:.7rem;color:var(--text-muted,#666);cursor:pointer">Column Mappings</summary>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+              ${['doc_number','title','status','revision','date','modified_by'].map(col => `
+                <div>
+                  <div class="field-label" style="font-size:.6rem">${col}</div>
+                  <input class="field-input" style="font-size:.68rem"
+                    id="doc-${def.key}-col-${col}" value="${cols[col]||''}" placeholder="${col}">
+                </div>`).join('')}
+            </div>
+            <div style="margin-top:8px">
+              <div class="field-label" style="font-size:.68rem">Status Map (Raw Status → Normalised Status, one per line)</div>
+              <textarea id="doc-${def.key}-statusmap" class="field-input"
+                style="height:70px;font-size:.67rem;font-family:monospace;resize:vertical"
+                placeholder="Approved → Approved&#10;Draft → In Review">${
+                  Object.entries(src.status_map||{}).map(([k,v])=>k+' → '+v).join('\n')
+                }</textarea>
+            </div>
+          </details>
+        </div>
+
+        <!-- SharePoint live fields -->
+        <div id="doc-${def.key}-live-fields" ${!isLive ? 'style="display:none"' : ''}>
+
+          <!-- Credentials box -->
+          <div style="background:rgba(0,95,125,.08);border:1px solid rgba(0,95,125,.3);
+            border-radius:6px;padding:14px;margin-bottom:12px">
+            <div style="font-size:.75rem;font-weight:600;color:var(--rhyba-teal-light);margin-bottom:12px">
+              🔐 SharePoint Connection (App Registration)
+            </div>
+            <div style="margin-bottom:10px">
+              <div class="field-label">Site URL</div>
+              <input id="doc-${def.key}-sp-url" class="field-input" type="text"
+                value="${(src.sharepoint||{}).site_url||''}"
+                placeholder="https://yourorg.sharepoint.com/sites/ProjectDocs">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="field-label">Tenant ID</div>
+                <input id="doc-${def.key}-sp-tenant" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).tenant_id||''}"
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+              </div>
+              <div>
+                <div class="field-label">Client ID</div>
+                <input id="doc-${def.key}-sp-client" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).client_id||''}"
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Client Secret</div>
+              <input id="doc-${def.key}-sp-secret" class="field-input" type="password"
+                value="${(src.sharepoint||{}).client_secret||''}"
+                placeholder="Stored in config.yaml — keep repo private">
+              <div style="font-size:.65rem;color:#e09a2a;margin-top:4px">
+                ⚠️ Never commit to a public repository.
+              </div>
+            </div>
+          </div>
+
+          <!-- Query mode selector -->
+          <div style="margin-bottom:12px">
+            <div class="field-label">Query mode</div>
+            <div style="display:flex;gap:16px;margin-top:5px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer">
+                <input type="radio" name="doc-${def.key}-spmode" value="folder"
+                  ${(src.sharepoint||{}).query_mode !== 'file' ? 'checked' : ''}
+                  onchange="docToggleSpMode('${def.key}')">
+                <div>
+                  <div style="font-weight:600">Scan folder</div>
+                  <div style="font-size:.65rem;color:var(--text3)">List all matching files in a library/subfolder</div>
+                </div>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer">
+                <input type="radio" name="doc-${def.key}-spmode" value="file"
+                  ${(src.sharepoint||{}).query_mode === 'file' ? 'checked' : ''}
+                  onchange="docToggleSpMode('${def.key}')">
+                <div>
+                  <div style="font-weight:600">Single file</div>
+                  <div style="font-size:.65rem;color:var(--text3)">Point to a specific .xlsx / .csv on SharePoint</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Folder scan fields -->
+          <div id="doc-${def.key}-spmode-folder"
+            ${(src.sharepoint||{}).query_mode === 'file' ? 'style="display:none"' : ''}
+            style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px">
+            <div style="font-size:.68rem;font-weight:700;color:var(--text3);
+              text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">
+              📁 Folder scan settings
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="field-label">Document Library</div>
+                <input id="doc-${def.key}-sp-library" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).library||''}" placeholder="Documents">
+              </div>
+              <div>
+                <div class="field-label">Status column</div>
+                <input id="doc-${def.key}-sp-statuscol" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).status_column||'ApprovalStatus'}"
+                  placeholder="ApprovalStatus">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div class="field-label">Subfolder path (optional)</div>
+              <input id="doc-${def.key}-sp-folder" class="field-input" type="text"
+                value="${(src.sharepoint||{}).folder_path||''}"
+                placeholder="EPC/Engineering/Drawings — leave empty to scan full library">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <div class="field-label">File pattern (regex)</div>
+                <input id="doc-${def.key}-sp-pattern" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).file_pattern||''}"
+                  placeholder="\.(pdf|docx|xlsx)$">
+              </div>
+              <div>
+                <div class="field-label">Doc number from filename (regex group 1)</div>
+                <input id="doc-${def.key}-sp-docnum" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).doc_number_pattern||''}"
+                  placeholder="^([A-Z]-[A-Z]{2}-\d{3})">
+              </div>
+            </div>
+          </div>
+
+          <!-- Single file fields -->
+          <div id="doc-${def.key}-spmode-file"
+            ${(src.sharepoint||{}).query_mode !== 'file' ? 'style="display:none"' : ''}
+            style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px">
+            <div style="font-size:.68rem;font-weight:700;color:var(--text3);
+              text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">
+              📄 Single file settings
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="field-label">Document Library</div>
+                <input id="doc-${def.key}-sp-file-library" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).library||''}" placeholder="Documents">
+                <div style="font-size:.62rem;color:var(--text3);margin-top:3px">
+                  The display name of the library (e.g. "Documents", not the URL path)
+                </div>
+              </div>
+              <div>
+                <div class="field-label">Sheet Name</div>
+                <input id="doc-${def.key}-sp-file-sheet" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).sheet||''}" placeholder="Sheet1">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div class="field-label">File path within library</div>
+              <input id="doc-${def.key}-sp-filepath" class="field-input" type="text"
+                value="${(src.sharepoint||{}).file_path||''}"
+                placeholder="EPC/Document Register/doc_register.xlsx">
+              <div style="font-size:.62rem;color:var(--text3);margin-top:3px">
+                Path from the library root. Use forward slashes. Must end in .xlsx or .csv.
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <div class="field-label">Doc number column</div>
+                <input id="doc-${def.key}-sp-file-docnum" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).doc_number_column||''}"
+                  placeholder="Document Number">
+              </div>
+              <div>
+                <div class="field-label">Status column</div>
+                <input id="doc-${def.key}-sp-file-statuscol" class="field-input" type="text"
+                  value="${(src.sharepoint||{}).status_column||''}"
+                  placeholder="Status">
+              </div>
+            </div>
+          </div>
+
+          <!-- Status map (shared for both modes) -->
+          <div>
+            <div class="field-label">Status Map (Raw → Normalised, one per line)</div>
+            <textarea id="doc-${def.key}-live-statusmap" class="field-input"
+              style="height:70px;font-family:monospace;resize:vertical"
+              placeholder="0 → Approved&#10;1 → Draft&#10;2 → Rejected">${
+                Object.entries(src.status_map||{}).map(([k,v])=>k+' → '+v).join('\n')
+              }</textarea>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  } catch(e) {
+    console.error('loadDocMgt error:', e);
+  }
+}
+
+async function saveDocMgt() {
+  try {
+    const cfg = await apiGet('/api/config');
+    if (!cfg.doc_management) cfg.doc_management = {};
+    const dm = cfg.doc_management;
+
+    // Master register
+    if (!dm.master_register) dm.master_register = { columns: {} };
+    dm.master_register.path  = document.getElementById('doc-master-path')?.value?.trim() || '';
+    dm.master_register.sheet = document.getElementById('doc-master-sheet')?.value?.trim() || '';
+
+    // Sources
+    if (!dm.sources) dm.sources = {};
+    const srcKeys = ['sharepoint','pid','navisworks'];
+    srcKeys.forEach(key => {
+      if (!dm.sources[key]) dm.sources[key] = { columns:{}, status_map:{} };
+      const src = dm.sources[key];
+      src.enabled     = document.getElementById('doc-'+key+'-enabled')?.checked ?? true;
+      const liveRadio = document.querySelector('input[name="doc-'+key+'-srctype"][value="sharepoint_live"]');
+      src.source_type = liveRadio?.checked ? 'sharepoint_live' : 'file';
+      src.path        = document.getElementById('doc-'+key+'-path')?.value?.trim()  || '';
+      src.sheet       = document.getElementById('doc-'+key+'-sheet')?.value?.trim() || '';
+      if (!src.columns) src.columns = {};
+      ['doc_number','title','status','revision','date','modified_by'].forEach(col => {
+        const val = document.getElementById('doc-'+key+'-col-'+col)?.value?.trim();
+        if (val) src.columns[col] = val;
+      });
+      const smId = src.source_type === 'sharepoint_live'
+        ? 'doc-'+key+'-live-statusmap' : 'doc-'+key+'-statusmap';
+      const raw = document.getElementById(smId)?.value || '';
+      const smap = {};
+      raw.split('\n').forEach(line => {
+        const m = line.match(/^(.+?)\s*\u2192\s*(.+)$/);
+        if (m) smap[m[1].trim()] = m[2].trim();
+      });
+      src.status_map = smap;
+      if (src.source_type === 'sharepoint_live') {
+        const spMode = document.querySelector('input[name="doc-'+key+'-spmode"]:checked')?.value || 'folder';
+        const isFile = spMode === 'file';
+        src.sharepoint = {
+          query_mode:         spMode,
+          site_url:           document.getElementById('doc-'+key+'-sp-url')?.value?.trim()           || '',
+          tenant_id:          document.getElementById('doc-'+key+'-sp-tenant')?.value?.trim()         || '',
+          client_id:          document.getElementById('doc-'+key+'-sp-client')?.value?.trim()         || '',
+          client_secret:      document.getElementById('doc-'+key+'-sp-secret')?.value?.trim()         || '',
+          // Folder mode fields
+          library:            document.getElementById('doc-'+key+'-sp-library')?.value?.trim()        || '',
+          folder_path:        document.getElementById('doc-'+key+'-sp-folder')?.value?.trim()         || '',
+          file_pattern:       document.getElementById('doc-'+key+'-sp-pattern')?.value?.trim()        || '',
+          doc_number_pattern: document.getElementById('doc-'+key+'-sp-docnum')?.value?.trim()         || '',
+          status_column:      document.getElementById('doc-'+key+'-sp-statuscol')?.value?.trim()      || 'ApprovalStatus',
+          // Single file mode fields
+          file_path:          document.getElementById('doc-'+key+'-sp-filepath')?.value?.trim()       || '',
+          sheet:              document.getElementById('doc-'+key+'-sp-file-sheet')?.value?.trim()     || '',
+          doc_number_column:  document.getElementById('doc-'+key+'-sp-file-docnum')?.value?.trim()    || '',
+          ...(isFile ? {
+            library:          document.getElementById('doc-'+key+'-sp-file-library')?.value?.trim()   || '',
+            status_column:    document.getElementById('doc-'+key+'-sp-file-statuscol')?.value?.trim() || '',
+          } : {}),
+        };
+      }
+    });
+
+    await apiPost('/api/config', cfg);
+    toast('Document Management config saved', 'ok');
+  } catch(e) {
+    toast('Save failed: ' + e.message, 'error');
+  }
+}
+
+// ── Detect if opened as file:// (direct double-click) vs served via admin_server.py
+const _isFileProtocol = window.location.protocol === 'file:';
+const _serverUrl = _isFileProtocol ? 'http://localhost:SERVER_PORT_PLACEHOLDER' : '';
+const API = _serverUrl;
+
+let cfg = {};    // current config object
+
+// ── navigation ────────────────────────────────────
+function showSection(id, navEl) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  const target = navEl || document.querySelector(`.nav-item[data-section="${id}"]`);
+  if (target) target.classList.add('active');
+  // Lazy-load section data
+  if (id === 'docmgt')  loadDocMgt();
+  if (id === 'spatial') loadSpatialPriority();
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  try { sessionStorage.setItem('admin-theme', html.getAttribute('data-theme')); } catch(e) {}
+}
+
+function setAdminSize(size) {
+  document.documentElement.setAttribute('data-size', size);
+  document.querySelectorAll('.size-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.size === size)
+  );
+  try { sessionStorage.setItem('admin-size', size); } catch(e) {}
+}
+
+// ── toast ─────────────────────────────────────────
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+// ── API helpers ───────────────────────────────────
+async function apiGet(path) {
+  const r = await fetch(API + path);
+  return r.json();
+}
+async function apiPost(path, data) {
+  const r = await fetch(API + path, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  return r.json();
+}
+
+// ── load config ───────────────────────────────────
+async function loadConfig() {
+  cfg = await apiGet('/api/config');
+  populateAll();
+  return cfg;
+}
+
+function populateAll() {
+  populateOutputPath();
+  populateGeneral();
+  populateSources();
+  populateMspXml();
+  populateDisciplines();
+  populateLayout();
+  populateFilters();
+  populateStamps();
+}
+
+// ── GENERAL ───────────────────────────────────────
+function populateGeneral() {
+  const d = cfg.dashboard || {};
+  document.getElementById('cfg-title').value    = d.title    || '';
+  document.getElementById('cfg-subtitle').value = d.subtitle || '';
+  document.getElementById('cfg-theme').value    = d.theme    || 'dark';
+  const s = cfg.snapshots || {};
+  document.getElementById('cfg-snap-enabled').checked  = s.enabled !== false;
+  document.getElementById('cfg-snap-fullsize').checked = s.save_full_size !== false;
+  document.getElementById('cfg-snap-w').value = s.thumb_width  || 480;
+  document.getElementById('cfg-snap-h').value = s.thumb_height || 270;
+  document.getElementById('cfg-snap-q').value = s.jpeg_quality || 82;
+}
+async function saveGeneral() {
+  cfg.dashboard = {
+    title:    document.getElementById('cfg-title').value,
+    subtitle: document.getElementById('cfg-subtitle').value,
+    theme:    document.getElementById('cfg-theme').value,
+  };
+  cfg.snapshots = {
+    enabled:       document.getElementById('cfg-snap-enabled').checked,
+    save_full_size:document.getElementById('cfg-snap-fullsize').checked,
+    thumb_width:   +document.getElementById('cfg-snap-w').value,
+    thumb_height:  +document.getElementById('cfg-snap-h').value,
+    jpeg_quality:  +document.getElementById('cfg-snap-q').value,
+  };
+  await apiPost('/api/config', cfg);
+  toast('General settings saved');
+}
+
+// ── SOURCES ───────────────────────────────────────
+function populateSources() {
+  const list = document.getElementById('source-list');
+  list.innerHTML = '';
+  const sources = cfg.bcf_sources || [];
+  sources.forEach(p => addSourceEntry(p));
+}
+function addSourceEntry(value='') {
+  const list = document.getElementById('source-list');
+  const div = document.createElement('div');
+  div.className = 'source-entry';
+  const ext = value.includes('.xlsx') ? 'xlsx' : value.includes('.vimmrk') ? 'vimmrk' : value.includes('.bcf') ? 'bcf' : '?';
+  div.innerHTML =
+    `<span class="ext-badge ext-${ext}">${ext.toUpperCase()}</span>` +
+    `<input type="text" value="${value}" placeholder="./exports/*.bcf" oninput="this.previousElementSibling.textContent=guessExt(this.value)">` +
+    `<button class="btn-remove" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(div);
+  div.querySelector('input').focus();
+}
+function guessExt(v) {
+  return v.includes('.xlsx')?'XLSX':v.includes('.vimmrk')?'VIMMRK':v.includes('.bcf')?'BCF':'?';
+}
+async function saveSources() {
+  const inputs = document.querySelectorAll('#source-list input');
+  cfg.bcf_sources = [...inputs].map(i => i.value.trim()).filter(Boolean);
+  await apiPost('/api/config', cfg);
+  toast('Source patterns saved');
+}
+async function scanSources() {
+  await saveSources();
+  const data = await apiGet('/api/sources');
+  const card = document.getElementById('scan-card');
+  const res  = document.getElementById('scan-results');
+  card.style.display = 'block';
+  if (!data.files.length) {
+    res.innerHTML = '<p style="font-size:.73rem;color:var(--text3);padding:8px 0">No files found matching the current patterns.</p>';
+    return;
+  }
+  res.innerHTML = data.files.map(f =>
+    `<div class="file-scan-item">
+      <span class="fs-ext ext-${f.ext.slice(1)}">${f.ext.toUpperCase()}</span>
+      <span class="fs-name" title="${f.path}">${f.name}</span>
+      <span class="fs-size">${f.size_kb} KB</span>
+    </div>`
+  ).join('');
+}
+
+// ── DISCIPLINES ───────────────────────────────────
+const DISC_COLORS_DEFAULT = {A:'#aab6be',E:'#e09a2a',H:'#0081b1',P:'#e05c5c',S:'#5ab87a',Q:'#73b5e2'};
+function populateDisciplines() {
+  const list  = document.getElementById('disc-list');
+  list.innerHTML = '';
+  const dmap  = cfg.discipline_map    || {};
+  const dcols = cfg.discipline_colors || {};
+  Object.keys(dmap).forEach(prefix => addDiscEntry(prefix, dmap[prefix], dcols[prefix]));
+}
+function addDiscEntry(prefix='', name='', color='#73b5e2') {
+  const list = document.getElementById('disc-list');
+  const div = document.createElement('div');
+  div.className = 'disc-row';
+  div.innerHTML =
+    `<input type="text" value="${prefix}" placeholder="A" maxlength="3" style="width:48px;text-align:center;font-weight:700;text-transform:uppercase">` +
+    `<input type="text" value="${name}" placeholder="Architecture" style="flex:1">` +
+    `<input type="color" value="${color || '#73b5e2'}">` +
+    `<button class="btn-remove" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(div);
+}
+async function saveDisciplines() {
+  const rows = document.querySelectorAll('#disc-list .disc-row');
+  const dmap = {}, dcols = {};
+  rows.forEach(row => {
+    const [prefixEl, nameEl, colorEl] = row.querySelectorAll('input');
+    const p = prefixEl.value.trim().toUpperCase();
+    if (p) { dmap[p] = nameEl.value.trim(); dcols[p] = colorEl.value; }
+  });
+  cfg.discipline_map    = dmap;
+  cfg.discipline_colors = dcols;
+  await apiPost('/api/config', cfg);
+  toast('Disciplines saved');
+}
+
+// ── LAYOUT ───────────────────────────────────────
+const KPI_OPTIONS = [
+  {id:'total_count',label:'Total issues'},
+  {id:'open_count',label:'Open'},
+  {id:'in_progress_count',label:'In progress'},
+  {id:'resolved_count',label:'Resolved'},
+  {id:'closed_count',label:'Closed'},
+  {id:'critical_count',label:'Critical'},
+  {id:'overdue_count',label:'Overdue'},
+  {id:'avg_age_days',label:'Avg age (days)'},
+];
+const CHART_FIELDS = ['status','type','priority','assigned','discipline','spatial','level','created'];
+const CHART_TYPES  = ['bar','doughnut','timeline'];
+
+function populateLayout() {
+  // KPI
+  const kpiGrid = document.getElementById('kpi-grid');
+  const kpiSel  = new Set(cfg.layout?.kpi_row || []);
+  kpiGrid.innerHTML = '';
+  KPI_OPTIONS.forEach(o => {
+    kpiGrid.innerHTML +=
+      `<label class="kpi-item">
+        <input type="checkbox" value="${o.id}" ${kpiSel.has(o.id)?'checked':''}>
+        <label>${o.label}</label>
+      </label>`;
+  });
+  // Charts
+  const chartList = document.getElementById('chart-list');
+  chartList.innerHTML = '';
+  (cfg.layout?.charts || []).forEach(c => addChartRow(c));
+  // Table
+  const tbl = cfg.layout?.table || {};
+  document.getElementById('tbl-columns').value = (tbl.columns || []).join(', ');
+  document.getElementById('tbl-sort').value    = tbl.default_sort || 'due';
+  document.getElementById('tbl-dir').value     = tbl.sort_dir     || 'asc';
+  document.getElementById('tbl-page').value    = tbl.page_size    || 20;
+}
+function addChartRow(c={}) {
+  const list = document.getElementById('chart-list');
+  const div  = document.createElement('div');
+  div.className = 'chart-row';
+  div.innerHTML =
+    `<select>${CHART_TYPES.map(t=>`<option${c.type===t?' selected':''}>${t}</option>`).join('')}</select>` +
+    `<select>${CHART_FIELDS.map(f=>`<option${c.field===f?' selected':''}>${f}</option>`).join('')}</select>` +
+    `<input type="text" value="${c.title||''}" placeholder="Title">` +
+    `<button class="btn-remove" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(div);
+}
+function addChart() { addChartRow(); }
+async function saveLayout() {
+  const kpiRow = [...document.querySelectorAll('#kpi-grid input:checked')].map(i => i.value);
+  const charts = [...document.querySelectorAll('#chart-list .chart-row')].map(row => {
+    const [typeEl, fieldEl, titleEl] = row.querySelectorAll('select, input[type="text"]');
+    return {type: typeEl.value, field: fieldEl.value, title: titleEl.value};
+  });
+  const cols = document.getElementById('tbl-columns').value.split(',').map(s=>s.trim()).filter(Boolean);
+  cfg.layout = {
+    kpi_row: kpiRow,
+    charts:  charts,
+    table:   {
+      columns:      cols,
+      default_sort: document.getElementById('tbl-sort').value,
+      sort_dir:     document.getElementById('tbl-dir').value,
+      page_size:    +document.getElementById('tbl-page').value,
+    }
+  };
+  await apiPost('/api/config', cfg);
+  toast('Layout saved');
+}
+
+// ── FILTERS ──────────────────────────────────────
+function parseCSV(s) { return s.split(',').map(x=>x.trim()).filter(Boolean); }
+function populateFilters() {
+  const f = cfg.filters || {};
+  document.getElementById('filt-status').value  = (f.status        || []).join(', ');
+  document.getElementById('filt-type').value    = (f.type          || []).join(', ');
+  document.getElementById('filt-priority').value= (f.priority      || []).join(', ');
+  document.getElementById('filt-include').value = (f.label_include || []).join(', ');
+  document.getElementById('filt-exclude').value = (f.label_exclude || []).join(', ');
+}
+async function saveFilters() {
+  cfg.filters = {
+    status:        parseCSV(document.getElementById('filt-status').value),
+    type:          parseCSV(document.getElementById('filt-type').value),
+    priority:      parseCSV(document.getElementById('filt-priority').value),
+    label_include: parseCSV(document.getElementById('filt-include').value),
+    label_exclude: parseCSV(document.getElementById('filt-exclude').value),
+  };
+  await apiPost('/api/config', cfg);
+  toast('Filters saved');
+}
+
+// ── STAMP MAPPING ─────────────────────────────────
+function populateStamps() {
+  const container = document.getElementById('stamp-map-container');
+  container.innerHTML = '';
+  const map  = cfg.msp_task_map || {};
+  const dcol = cfg.discipline_colors || {A:'#aab6be',E:'#e09a2a',H:'#0081b1',P:'#e05c5c',S:'#5ab87a',Q:'#73b5e2'};
+  const dmap = cfg.discipline_map    || {A:'Architecture',E:'Electrical',H:'HVAC',P:'Process Engineering',S:'Sanitary',Q:'BIM/3D Coordination'};
+
+  // Group stamps by discipline prefix
+  const groups = {};
+  Object.keys(map).sort().forEach(stamp => {
+    const d = stamp[0].toUpperCase();
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(stamp);
+  });
+
+  const grid = document.createElement('div');
+  grid.className = 'stamp-map-grid';
+
+  Object.keys(groups).sort().forEach(disc => {
+    const col = document.createElement('div');
+    col.className = 'card';
+    col.innerHTML = `<div class="card-title stamp-group-title">${dmap[disc]||disc}</div>`;
+    groups[disc].forEach(stamp => {
+      const color = dcol[disc] || '#73b5e2';
+      const div = document.createElement('div');
+      div.className = 'stamp-entry';
+      div.innerHTML =
+        `<span class="stamp-key" style="background:${color}">${stamp}</span>` +
+        `<input type="text" value="${map[stamp]||''}" placeholder="MS Project task name" data-stamp="${stamp}">`;
+      col.appendChild(div);
+    });
+    // Add new stamp button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add-source';
+    addBtn.style.marginTop = '6px';
+    addBtn.textContent = '+ Add stamp';
+    addBtn.onclick = () => {
+      const code = prompt(`New stamp code for ${dmap[disc]||disc} (e.g. ${disc}090):`);
+      if (!code) return;
+      if (!cfg.msp_task_map) cfg.msp_task_map = {};
+      cfg.msp_task_map[code.toUpperCase()] = '';
+      populateStamps();
+    };
+    col.appendChild(addBtn);
+    grid.appendChild(col);
+  });
+
+  container.appendChild(grid);
+}
+async function saveStamps() {
+  const inputs = document.querySelectorAll('#stamp-map-container input[data-stamp]');
+  const map = {};
+  inputs.forEach(inp => {
+    if (inp.value.trim()) map[inp.dataset.stamp] = inp.value.trim();
+  });
+  cfg.msp_task_map = map;
+  await apiPost('/api/config', cfg);
+  toast('Stamp mapping saved');
+}
+
+// ── OUTPUT PATH ──────────────────────────────────
+function populateOutputPath() {
+  const el = document.getElementById('cfg-output-path');
+  if (el) el.value = cfg.output_path || 'dashboard.html';
+  updateDashboardLink();
+  const dpw = document.getElementById('cfg-data-password');
+  if (dpw) dpw.value = cfg.data_password || '';
+  const dout = document.getElementById('cfg-data-output');
+  if (dout) dout.value = cfg.data_output || 'data.js';
+}
+function updateDashboardLink() {
+  // The server always serves the built file at /dashboard regardless of output path
+  // so the link stays as /dashboard. Just update the tooltip with the actual file path.
+  const val = (document.getElementById('cfg-output-path')?.value || 'dashboard.html').trim();
+  const lnk = document.getElementById('link-dashboard');
+  if (lnk) lnk.title = 'Opens: ' + val;
+}
+async function saveOutputPath() {
+  cfg.output_path = document.getElementById('cfg-output-path').value.trim() || 'dashboard.html';
+  await apiPost('/api/config', cfg);
+  toast('Output path saved');
+}
+
+// ── MSP XML PATH ─────────────────────────────────
+function populateMspXml() {
+  document.getElementById('cfg-msp-xml').value = cfg.msp_xml_path || '';
+}
+async function saveMspXml() {
+  cfg.msp_xml_path = document.getElementById('cfg-msp-xml').value.trim();
+  await apiPost('/api/config', cfg);
+  toast('MS Project path saved');
+}
+
+// ── BUILD ─────────────────────────────────────────
+let _pollInterval = null;
+
+async function startBuild() {
+  // Dashboard rebuild not available in customer package
+  showSection('build');
+  toast('Dashboard-Build nicht verfügbar. index.html wird von RHYBA Engineering bereitgestellt.', 'error');
+}
+
+async function pollBuild() {
+  const data = await apiGet('/api/build/status');
+  document.getElementById('build-log').textContent = data.log || '';
+  const log = document.getElementById('build-log');
+  log.scrollTop = log.scrollHeight;
+
+  if (data.status !== 'running') {
+    clearInterval(_pollInterval);
+    setBuildStatus(data.status);
+    if (data.status === 'done') {
+      toast('Build complete!');
+      loadDashboardInfo();
+    } else if (data.status === 'error') {
+      toast('Build failed — check log', 'error');
+    }
+  }
+}
+
+function setBuildStatus(status) {
+  const bar  = document.getElementById('build-status-bar');
+  const text = document.getElementById('build-status-text');
+  bar.className = 'build-status ' + status;
+  const labels = {idle:'Ready to build',running:'Building…',done:'Build complete',error:'Build failed'};
+  const icons  = {idle:'⬤',running:'',done:'✓',error:'✗'};
+  bar.innerHTML = (status==='running'?'<div class="spinner"></div>':'<span>'+icons[status]+'</span>') +
+    '<span id="build-status-text">' + (labels[status]||status) + '</span>';
+}
+
+async function loadDashboardInfo() {
+  const info = await apiGet('/api/dashboard/info');
+  const el   = document.getElementById('dashboard-info');
+  if (info.exists) {
+    el.innerHTML =
+      `<a class="dashboard-link" href="${_serverUrl}/dashboard" target="_blank">
+        📊 ${info.path || 'dashboard.html'}
+        <span class="dashboard-meta">${info.size_kb} KB · built ${info.modified}</span>
+      </a>
+      <p style="font-size:.65rem;color:var(--text3);margin-top:6px">
+        ↳ Accessible via server: <code style="color:var(--rhyba-teal-light)">http://localhost:${info.port||5050}/dashboard</code>
+        &nbsp;·&nbsp; or open the file directly from disk
+      </p>`;
+  } else {
+    el.innerHTML = '<p style="font-size:.7rem;color:var(--text3);margin-top:8px">No dashboard built yet.</p>';
+  }
+}
+
+// ── init ──────────────────────────────────────────
+if (_isFileProtocol) {
+  document.getElementById('file-warning').style.display = 'block';
+  // Still try to reach the server - if it's running, all works fine
+  // If not, show a clear error on first API call
+}
+// Restore size and theme preferences
+try {
+  const sz = sessionStorage.getItem('admin-size');
+  if (sz) setAdminSize(sz);
+  const th = sessionStorage.getItem('admin-theme');
+  if (th) document.documentElement.setAttribute('data-theme', th);
+} catch(e) {}
+
+loadConfig().catch(() => {
+  if (_isFileProtocol) {
+    document.getElementById('build-log').textContent =
+      'Cannot reach admin server.\n\n' +
+      'Make sure admin_server.py is running, then open:\n' +
+      'http://localhost:SERVER_PORT_PLACEHOLDER/\n\n' +
+      'Do not open admin.html by double-clicking — it must be served by admin_server.py.';
+    setBuildStatus('error');
+  }
+});
+loadDashboardInfo();
+loadSpatialPriority();
+
+// ── Git / Deploy ──────────────────────────────────────────────────
+async function loadGitStatus() {
+  try {
+    const r = await fetch(`${API}/api/git/status`);
+    const d = await r.json();
+    const el = document.getElementById('git-status-line');
+    if (!d.git_available) {
+      el.innerHTML = '<span style="color:#e05c5c">Git not found — install Git and ensure it is on PATH.</span>';
+      return;
+    }
+    const remote = d.remote ? `<code style="font-size:.7rem">${d.remote}</code>` : '<em>no remote</em>';
+    const changes = d.has_changes
+      ? '<span style="color:#e09a2a"> dashboard.html has uncommitted changes</span>'
+      : '<span style="color:#5ab87a"> dashboard.html is up to date</span>';
+    el.innerHTML = `Remote: ${remote} &nbsp;|&nbsp;${changes}`;
+    const toggle = document.getElementById('auto-push-toggle');
+    if (toggle) toggle.checked = !!d.auto_push;
+  } catch(e) {
+    const el = document.getElementById('git-status-line');
+    if (el) el.innerHTML = `<span style="color:#e09a2a">
+      Cannot reach admin server (${e.message}).
+      Make sure <code>admin_server.py</code> is running on port ${SERVER_PORT_PLACEHOLDER}.
+    </span>`;
+  }
+}
+
+async function buildAndPush() {
+  toast('Dashboard-Build nicht verfügbar. index.html wird von RHYBA Engineering bereitgestellt.', 'error');
+}
+
+async function manualPush() {
+  const msg = document.getElementById('commit-msg')?.value?.trim() || null;
+  const gitWrap = document.getElementById('git-log-wrap');
+  const gitLog  = document.getElementById('git-log-output');
+  if (gitWrap) gitWrap.style.display = 'block';
+  if (gitLog)  gitLog.textContent = 'Starting git push...\n';
+
+  try {
+    const r = await fetch(`${API}/api/git/push`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({commit_msg: msg})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      // Record current log length so we only show NEW output (the git part)
+      let prevLen = 0;
+      try {
+        const s0 = await (await fetch(`${API}/api/build/status`)).json();
+        prevLen = (s0.log || '').length;
+      } catch(e) {}
+
+      if (_pollInterval) clearInterval(_pollInterval);
+      _pollInterval = setInterval(async () => {
+        try {
+          const s = await (await fetch(`${API}/api/build/status`)).json();
+          const newOutput = (s.log || '').slice(prevLen);
+          if (gitLog) {
+            gitLog.textContent = newOutput || '(waiting for git output...)';
+            gitLog.scrollTop = gitLog.scrollHeight;
+          }
+          if (s.status !== 'running' && newOutput.length > 0) {
+            clearInterval(_pollInterval);
+            _pollInterval = null;
+          }
+        } catch(e) { if (gitLog) gitLog.textContent += '\n[poll error: ' + e.message + ']'; }
+      }, 400);
+    } else {
+      if (gitLog) gitLog.textContent = 'Server error: ' + (d.error || 'unknown');
+    }
+  } catch(e) {
+    if (gitLog) gitLog.textContent = 'Cannot reach admin server.\nMake sure admin_server.py is running.\n\nError: ' + e.message;
+  }
+}
+
+async function setAutoPush(enabled) {
+  try {
+    const cfgR = await fetch(`${API}/api/config`);
+    const cfg  = await cfgR.json();
+    if (!cfg.git) cfg.git = {};
+    cfg.git.auto_push = enabled;
+    await fetch(`${API}/api/config`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(cfg)
+    });
+  } catch(e) { console.error('setAutoPush:', e); }
+}
+
+// Load git status when the build section is shown
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadGitStatus, 500);
+  // Refresh git status after build completes
+  const origPollLog = window._buildPollDone;
+  window._onBuildDone = () => { setTimeout(loadGitStatus, 1000); };
+});
+
+
+// ── Source type toggle ───────────────────────────────────────────
+function docToggleSourceType(key) {
+  const isLive = document.querySelector(
+    'input[name="doc-'+key+'-srctype"][value="sharepoint_live"]')?.checked;
+  const fileDiv = document.getElementById('doc-'+key+'-file-fields');
+  const liveDiv = document.getElementById('doc-'+key+'-live-fields');
+  if (fileDiv) fileDiv.style.display = isLive ? 'none' : '';
+  if (liveDiv) liveDiv.style.display = isLive ? '' : 'none';
+}
+
+// ── SharePoint query mode toggle (folder vs single file) ──────────
+function docToggleSpMode(key) {
+  const isFile = document.querySelector(
+    'input[name="doc-'+key+'-spmode"][value="file"]')?.checked;
+  const folderDiv = document.getElementById('doc-'+key+'-spmode-folder');
+  const fileDiv   = document.getElementById('doc-'+key+'-spmode-file');
+  if (folderDiv) folderDiv.style.display = isFile ? 'none' : '';
+  if (fileDiv)   fileDiv.style.display   = isFile ? '' : 'none';
+}
+
+// ── Spatial field priority ────────────────────────────────────────
+const SPATIAL_ALL = ['room','space','zone','area','level','grid_location'];
+
+function spatialRenderList(order) {
+  const list = document.getElementById('spatial-priority-list');
+  if (!list) return;
+  list.innerHTML = '';
+  order.forEach((field, i) => {
+    const row = document.createElement('div');
+    row.draggable = true;
+    row.dataset.field = field;
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 10px;' +
+      'background:var(--card-bg,#13131a);border:1px solid var(--border-color,#2a2a3a);' +
+      'border-radius:4px;cursor:grab;font-size:.75rem;user-select:none';
+
+    // Build inner HTML safely
+    const grip = document.createElement('span');
+    grip.style.cssText = 'color:var(--text-muted,#666);font-size:.8rem';
+    grip.textContent = '⠿';
+
+    const num = document.createElement('span');
+    num.style.cssText = 'color:var(--rhyba-teal-light,#73b5e2);font-weight:600;min-width:14px';
+    num.textContent = (i + 1) + '.';
+
+    const code = document.createElement('code');
+    code.style.flex = '1';
+    code.textContent = field;
+
+    const del = document.createElement('button');
+    del.style.cssText = 'background:none;border:none;color:var(--text-muted,#666);cursor:pointer;padding:0 2px;font-size:.8rem';
+    del.title = 'Remove';
+    del.textContent = '✕';
+    del.onclick = () => spatialRemove(field);
+
+    row.appendChild(grip);
+    row.appendChild(num);
+    row.appendChild(code);
+    row.appendChild(del);
+
+    // Drag-and-drop
+    row.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', field);
+      row.style.opacity = '0.4';
+    });
+    row.addEventListener('dragend', () => { row.style.opacity = '1'; });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      row.style.borderColor = 'var(--rhyba-teal,#005f7d)';
+    });
+    row.addEventListener('dragleave', () => { row.style.borderColor = ''; });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.style.borderColor = '';
+      const from = e.dataTransfer.getData('text/plain');
+      if (from === field) return;
+      const cur = spatialGetOrder();
+      const fi = cur.indexOf(from), ti = cur.indexOf(field);
+      if (fi < 0 || ti < 0) return;
+      cur.splice(fi, 1);
+      cur.splice(ti, 0, from);
+      spatialRenderList(cur);
+    });
+    list.appendChild(row);
+  });
+}
+
+
+function spatialGetOrder() {
+  return [...document.querySelectorAll('#spatial-priority-list [data-field]')]
+    .map(r => r.dataset.field);
+}
+
+function spatialAddField() {
+  const sel = document.getElementById('spatial-add-field');
+  if (!sel) return;
+  const field = sel.value;
+  const cur   = spatialGetOrder();
+  if (!cur.includes(field)) { cur.push(field); spatialRenderList(cur); }
+}
+
+function spatialRemove(field) {
+  const cur = spatialGetOrder().filter(f => f !== field);
+  spatialRenderList(cur);
+}
+
+function spatialReset() {
+  spatialRenderList(SPATIAL_ALL.slice());
+}
+
+async function loadSpatialPriority() {
+  try {
+    const cfg = await apiGet('/api/config');
+    const order = cfg.spatial_field_priority || SPATIAL_ALL.slice();
+    spatialRenderList(order);
+  } catch(e) {
+    spatialRenderList(SPATIAL_ALL.slice());
+  }
+}
+
+async function saveSpatialPriority() {
+  try {
+    const cfg   = await apiGet('/api/config');
+    const order = spatialGetOrder();
+    if (!order.length) { alert('Add at least one spatial field.'); return; }
+    cfg.spatial_field_priority = order;
+    await apiPost('/api/config', cfg);
+    showToast('Spatial priority saved. Rebuild to apply.');
+  } catch(e) {
+    alert('Save failed: ' + e.message);
+  }
+}
+</script>
+
+<style>
+/* ── Layout builder ── */
+.kpi-builder-row {
+  display:flex;flex-wrap:wrap;gap:8px;min-height:44px;
+  padding:8px;border:1px dashed var(--border);border-radius:var(--r);
+}
+.lb-kpi-pill {
+  display:flex;align-items:center;gap:5px;padding:5px 12px;
+  border-radius:20px;cursor:grab;font-size:.72rem;font-weight:600;
+  user-select:none;border:2px solid transparent;transition:opacity .15s;
+}
+.lb-kpi-pill.off{opacity:.35;border-style:dashed;border-color:var(--border);background:none!important;color:var(--text3)!important;}
+.lb-kpi-pill .lb-drag{opacity:.35;font-size:.85rem;}
+
+.lb-chart-canvas {
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  min-height:60px;padding:8px;border:1px dashed var(--border);border-radius:var(--r);
+}
+.lb-tile {
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+  padding:10px 12px;display:flex;flex-direction:column;gap:6px;
+  cursor:grab;user-select:none;transition:border-color .15s,box-shadow .15s;
+}
+.lb-tile.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px #0081b133;}
+.lb-tile.dragging{opacity:.35;}
+.lb-tile-hdr{display:flex;align-items:center;gap:6px;}
+.lb-tile-icon{font-size:.95rem;flex-shrink:0;}
+.lb-tile-title{
+  flex:1;font-size:.72rem;font-weight:700;color:var(--text1);
+  border:none;background:transparent;font-family:inherit;padding:0;outline:none;
+}
+.lb-tile-title:focus{background:var(--bg2);border-radius:3px;padding:1px 4px;}
+.lb-tile-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem;padding:0 2px;}
+.lb-tile-rm:hover{color:var(--error);}
+.lb-tile-meta{display:flex;gap:5px;flex-wrap:wrap;}
+.lb-tile-meta select{
+  background:var(--bg2);border:1px solid var(--border);border-radius:4px;
+  color:var(--text1);font-family:inherit;font-size:.65rem;padding:2px 5px;cursor:pointer;
+}
+.lb-chart-palette{display:flex;flex-wrap:wrap;gap:6px;}
+.lb-pal-item{
+  display:flex;align-items:center;gap:5px;padding:4px 10px;
+  border-radius:4px;cursor:pointer;background:var(--bg3);
+  border:1px solid var(--border);font-size:.7rem;font-weight:600;color:var(--text2);
+  transition:background .12s,border-color .12s;
+}
+.lb-pal-item:hover{background:#0081b122;border-color:var(--accent);color:var(--text1);}
+.lb-col-row{
+  display:flex;flex-wrap:wrap;gap:6px;min-height:38px;padding:6px;
+  border:1px dashed var(--border);border-radius:var(--r);
+}
+.lb-col-pool{background:var(--bg3);}
+.lb-col-pill{
+  display:flex;align-items:center;gap:4px;padding:4px 10px;
+  border-radius:16px;background:var(--bg2);border:1px solid var(--border);
+  font-size:.68rem;font-weight:600;cursor:grab;color:var(--text2);user-select:none;
+  transition:border-color .12s;
+}
+.lb-col-pill:hover{border-color:var(--accent);color:var(--text1);}
+.lb-col-pool .lb-col-pill{cursor:pointer;}
+.lb-col-pill .px{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.75rem;padding:0 1px;line-height:1;}
+.lb-col-pill .px:hover{color:var(--error);}
+</style>
+
+<script>
+(function() {
+  // ── builder state ────────────────────────────────────────────
+  var _kpis   = [];   // ordered active KPI ids
+  var _charts = [];   // [{field,title,type,col}]
+  var _cols   = [];   // ordered active column ids
+  var _dsrc   = null; // drag source
+
+  var KPI_DEFS = [
+    {id:'open_count',        label:'Open',        color:'#e05c5c'},
+    {id:'critical_count',    label:'Critical',    color:'#e05c5c'},
+    {id:'overdue_count',     label:'Overdue',     color:'#e07c2a'},
+    {id:'avg_age_days',      label:'Avg Age',     color:'#73b5e2'},
+    {id:'total_count',       label:'Total',       color:'#73b5e2'},
+    {id:'in_progress_count', label:'In Progress', color:'#e09a2a'},
+    {id:'resolved_count',    label:'Resolved',    color:'#4fa3d4'},
+    {id:'closed_count',      label:'Closed',      color:'#5ab87a'},
+  ];
+  var FIELD_DEFS = [
+    {field:'status',     label:'By Status',        icon:'◉', type:'doughnut'},
+    {field:'type',       label:'By Issue Type',    icon:'▦', type:'bar'},
+    {field:'priority',   label:'By Priority',      icon:'▲', type:'bar'},
+    {field:'assigned',   label:'By Assignee',      icon:'👤', type:'bar'},
+    {field:'discipline', label:'By Discipline',    icon:'🏷', type:'bar'},
+    {field:'spatial',    label:'By Location',      icon:'📍', type:'bar'},
+    {field:'level',      label:'By Level',         icon:'🏢', type:'bar'},
+    {field:'created',    label:'Issues Over Time', icon:'📈', type:'timeline'},
+  ];
+  var COL_DEFS = [
+    {id:'title',label:'Title'},{id:'status',label:'Status'},{id:'type',label:'Type'},
+    {id:'priority',label:'Priority'},{id:'assigned',label:'Assigned'},{id:'due',label:'Due Date'},
+    {id:'age_days',label:'Age (days)'},{id:'created',label:'Created'},{id:'discipline',label:'Discipline'},
+    {id:'level',label:'Level'},{id:'spatial',label:'Location'},{id:'room',label:'Room'},
+    {id:'space',label:'Space'},{id:'zone',label:'Zone'},{id:'area',label:'Area'},
+    {id:'comment_count',label:'Comments'},{id:'source_file',label:'Source'},{id:'coords_m',label:'Coords'},
+  ];
+
+  function typeIcon(t) { return t==='doughnut'?'◉':t==='timeline'?'📈':'▦'; }
+
+  // ── KPI builder ──────────────────────────────────────────────
+  function renderKpis() {
+    var row = document.getElementById('kpi-grid');
+    if (!row) return;
+    row.innerHTML = '';
+    // Show active in order, then inactive
+    var all = KPI_DEFS.slice().sort(function(a,b){
+      var ia=_kpis.indexOf(a.id), ib=_kpis.indexOf(b.id);
+      if(ia>=0&&ib>=0) return ia-ib;
+      if(ia>=0) return -1; if(ib>=0) return 1; return 0;
+    });
+    all.forEach(function(k) {
+      var on = _kpis.indexOf(k.id) >= 0;
+      var pill = document.createElement('div');
+      pill.className = 'lb-kpi-pill' + (on?'':' off');
+      pill.draggable = true;
+      pill.dataset.id = k.id;
+      if (on) { pill.style.background=k.color+'22'; pill.style.borderColor=k.color+'88'; pill.style.color=k.color; }
+      pill.innerHTML = '<span class="lb-drag">⠿</span><span>'+k.label+'</span>';
+      pill.title = on ? 'Click to disable' : 'Click to enable';
+      pill.addEventListener('click', function() {
+        var idx = _kpis.indexOf(k.id);
+        if (idx>=0) _kpis.splice(idx,1); else _kpis.push(k.id);
+        renderKpis();
+      });
+      pill.addEventListener('dragstart', function(e){ _dsrc={t:'kpi',id:k.id}; e.dataTransfer.effectAllowed='move'; });
+      pill.addEventListener('dragover',  function(e){ e.preventDefault(); pill.style.outline='2px solid var(--accent)'; });
+      pill.addEventListener('dragleave', function(){ pill.style.outline=''; });
+      pill.addEventListener('drop', function(e){
+        e.preventDefault(); pill.style.outline='';
+        if(!_dsrc||_dsrc.t!=='kpi'||_dsrc.id===k.id) return;
+        var from=_kpis.indexOf(_dsrc.id), to=_kpis.indexOf(k.id);
+        if(from>=0&&to>=0){ _kpis.splice(to,0,_kpis.splice(from,1)[0]); renderKpis(); }
+      });
+      row.appendChild(pill);
+    });
+  }
+
+  // ── Chart canvas ─────────────────────────────────────────────
+  function renderChartCanvas() {
+    var canvas = document.getElementById('chart-canvas');
+    if (!canvas) return;
+    canvas.innerHTML = '';
+    _charts.forEach(function(ch, idx) {
+      var tile = document.createElement('div');
+      tile.className = 'lb-tile';
+      tile.draggable = true;
+      tile.dataset.idx = idx;
+
+      var hdr = document.createElement('div');
+      hdr.className = 'lb-tile-hdr';
+
+      var icon = document.createElement('span');
+      icon.className = 'lb-tile-icon';
+      icon.textContent = typeIcon(ch.type);
+
+      var titleIn = document.createElement('input');
+      titleIn.className = 'lb-tile-title';
+      titleIn.value = ch.title || ch.field;
+      titleIn.addEventListener('change', function(){ _charts[idx].title = this.value; });
+
+      var rmBtn = document.createElement('button');
+      rmBtn.className = 'lb-tile-rm';
+      rmBtn.textContent = '✕';
+      rmBtn.title = 'Remove';
+      rmBtn.addEventListener('click', function(e){ e.stopPropagation(); _charts.splice(idx,1); renderChartCanvas(); });
+
+      hdr.appendChild(icon); hdr.appendChild(titleIn); hdr.appendChild(rmBtn);
+
+      var meta = document.createElement('div');
+      meta.className = 'lb-tile-meta';
+
+      var typeEl = document.createElement('select');
+      ['doughnut','bar','timeline'].forEach(function(t){
+        var o=document.createElement('option'); o.value=o.textContent=t; if(ch.type===t)o.selected=true; typeEl.appendChild(o);
+      });
+      typeEl.addEventListener('change', function(){ _charts[idx].type=this.value; icon.textContent=typeIcon(this.value); });
+
+      var fieldEl = document.createElement('select');
+      FIELD_DEFS.forEach(function(f){
+        var o=document.createElement('option'); o.value=f.field; o.textContent=f.label; if(ch.field===f.field)o.selected=true; fieldEl.appendChild(o);
+      });
+      fieldEl.addEventListener('change', function(){ _charts[idx].field=this.value; });
+
+      var colEl = document.createElement('select');
+      [1,2,3].forEach(function(c){
+        var o=document.createElement('option'); o.value=c; o.textContent='col '+c; if((ch.col||1)===c)o.selected=true; colEl.appendChild(o);
+      });
+      colEl.addEventListener('change', function(){ _charts[idx].col=parseInt(this.value); });
+
+      meta.appendChild(typeEl); meta.appendChild(fieldEl); meta.appendChild(colEl);
+      tile.appendChild(hdr); tile.appendChild(meta);
+
+      // drag
+      tile.addEventListener('dragstart', function(e){ _dsrc={t:'chart',idx:idx}; tile.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+      tile.addEventListener('dragend',   function(){ tile.classList.remove('dragging'); });
+      tile.addEventListener('dragover',  function(e){ e.preventDefault(); tile.classList.add('drag-over'); });
+      tile.addEventListener('dragleave', function(){ tile.classList.remove('drag-over'); });
+      tile.addEventListener('drop', function(e){
+        e.preventDefault(); tile.classList.remove('drag-over');
+        if(!_dsrc||_dsrc.t!=='chart'||_dsrc.idx===idx) return;
+        var moved=_charts.splice(_dsrc.idx,1)[0];
+        var to=idx>_dsrc.idx?idx-1:idx;
+        _charts.splice(to,0,moved);
+        renderChartCanvas();
+      });
+
+      canvas.appendChild(tile);
+    });
+    renderPalette();
+  }
+
+  function renderPalette() {
+    var pal = document.getElementById('chart-palette');
+    if (!pal) return;
+    pal.innerHTML = '';
+    var used = {};
+    _charts.forEach(function(c){ used[c.field]=true; });
+    FIELD_DEFS.forEach(function(f){
+      var btn = document.createElement('div');
+      btn.className = 'lb-pal-item';
+      btn.style.opacity = used[f.field] ? '.4' : '1';
+      btn.innerHTML = f.icon + ' ' + f.label;
+      btn.title = used[f.field] ? 'Already on canvas' : 'Add to canvas';
+      btn.addEventListener('click', function(){
+        _charts.push({field:f.field, title:f.label, type:f.type, col:(_charts.length%3)+1});
+        renderChartCanvas();
+      });
+      pal.appendChild(btn);
+    });
+  }
+
+  // ── Table columns ────────────────────────────────────────────
+  function renderTableCols() {
+    var active = document.getElementById('tbl-active');
+    var pool   = document.getElementById('tbl-pool');
+    if (!active||!pool) return;
+    var usedSet = {};
+    _cols.forEach(function(id){ usedSet[id]=true; });
+    active.innerHTML = ''; pool.innerHTML = '';
+
+    _cols.forEach(function(id, idx){
+      var meta = null;
+      COL_DEFS.forEach(function(c){ if(c.id===id) meta=c; });
+      if (!meta) meta = {id:id, label:id};
+      active.appendChild(makeColPill(meta, true));
+    });
+    COL_DEFS.forEach(function(c){
+      if (!usedSet[c.id]) pool.appendChild(makeColPill(c, false));
+    });
+
+    // Update sort select
+    var sel = document.getElementById('tbl-sort');
+    if (sel) {
+      var cur = sel.value;
+      sel.innerHTML = '';
+      _cols.forEach(function(id){
+        var m=null; COL_DEFS.forEach(function(c){if(c.id===id)m=c;}); if(!m)m={id:id,label:id};
+        var o=document.createElement('option'); o.value=m.id; o.textContent=m.label;
+        if(m.id===cur) o.selected=true;
+        sel.appendChild(o);
+      });
+    }
+  }
+
+  function makeColPill(meta, isActive) {
+    var pill = document.createElement('div');
+    pill.className = 'lb-col-pill';
+    pill.dataset.id = meta.id;
+    if (isActive) {
+      pill.draggable = true;
+      pill.innerHTML = '<span class="lb-drag" style="opacity:.35;font-size:.85rem">⠿</span>' + meta.label +
+        '<button class="px" title="Remove">✕</button>';
+      pill.querySelector('.px').addEventListener('click', function(e){
+        e.stopPropagation();
+        _cols = _cols.filter(function(c){return c!==meta.id;});
+        renderTableCols();
+      });
+      pill.addEventListener('dragstart', function(e){ _dsrc={t:'col',id:meta.id}; e.dataTransfer.effectAllowed='move'; });
+      pill.addEventListener('dragover',  function(e){ e.preventDefault(); pill.style.outline='2px solid var(--accent)'; });
+      pill.addEventListener('dragleave', function(){ pill.style.outline=''; });
+      pill.addEventListener('drop', function(e){
+        e.preventDefault(); pill.style.outline='';
+        if(!_dsrc||_dsrc.t!=='col'||_dsrc.id===meta.id) return;
+        var from=_cols.indexOf(_dsrc.id), to=_cols.indexOf(meta.id);
+        if(from>=0&&to>=0){ _cols.splice(to,0,_cols.splice(from,1)[0]); renderTableCols(); }
+      });
+    } else {
+      pill.textContent = meta.label;
+      pill.title = 'Click to add';
+      pill.addEventListener('click', function(){ _cols.push(meta.id); renderTableCols(); });
+    }
+    return pill;
+  }
+
+  // ── Init from cfg ────────────────────────────────────────────
+  function lbInit() {
+    _kpis   = (cfg.layout && cfg.layout.kpi_row   ? cfg.layout.kpi_row.slice()    : ['open_count','critical_count','overdue_count','avg_age_days']);
+    _charts = (cfg.layout && cfg.layout.charts     ? JSON.parse(JSON.stringify(cfg.layout.charts)) : []);
+    _cols   = (cfg.layout && cfg.layout.table && cfg.layout.table.columns ? cfg.layout.table.columns.slice() : ['title','status','type','priority','assigned','due','age_days']);
+    renderKpis();
+    renderChartCanvas();
+    renderTableCols();
+    var tbl = (cfg.layout && cfg.layout.table) || {};
+    var dirSel  = document.getElementById('tbl-dir');
+    var pageIn  = document.getElementById('tbl-page');
+    if (dirSel) dirSel.value = tbl.sort_dir   || 'asc';
+    if (pageIn) pageIn.value = tbl.page_size  || 20;
+  }
+
+  // ── Override populateLayout ──────────────────────────────────
+  // Called by populateAll() after loadConfig() fetches cfg from server
+  var _origPopulate = window.populateLayout;
+  window.populateLayout = function() {
+    lbInit();
+    // still call original if it exists and IDs it needs are present
+  };
+
+  // ── Override saveLayout ──────────────────────────────────────
+  var _origSave = window.saveLayout;
+  window.saveLayout = async function(andBuild) {
+    if (andBuild === undefined) andBuild = true;
+    cfg.layout = {
+      kpi_row: _kpis.slice(),
+      charts:  _charts.map(function(c,i){return{type:c.type,field:c.field,title:c.title||c.field,col:c.col||((i%3)+1)};}),
+      table: {
+        columns:      _cols.slice(),
+        default_sort: (document.getElementById('tbl-sort') && document.getElementById('tbl-sort').value)  || 'due',
+        sort_dir:     (document.getElementById('tbl-dir')  && document.getElementById('tbl-dir').value)   || 'asc',
+        page_size:    parseInt((document.getElementById('tbl-page') && document.getElementById('tbl-page').value) || '20'),
+      }
+    };
+    await apiPost('/api/config', cfg);
+    toast('Layout saved');
+  };
+
+  // In case cfg already loaded when this script runs (unlikely but safe)
+  if (cfg && cfg.layout) lbInit();
+})();
+</script>
+
+
+<style>
+/* ── Color editor ── */
+.color-swatch-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.color-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 6px 10px;
+  min-width: 220px;
+}
+.color-row input[type="text"] {
+  flex: 1; min-width: 80px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text1);
+  font-family: inherit; font-size: .75rem; padding: 4px 8px;
+}
+.color-row input[type="color"] {
+  width: 32px; height: 28px; padding: 1px 2px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg2); cursor: pointer; flex-shrink: 0;
+}
+.color-preview {
+  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+}
+</style>
+
+<script>
+(function() {
+  // ── Defaults ─────────────────────────────────────────────────
+  var DEFAULT_STATUS = {
+    'Open':        '#e05c5c',
+    'In Progress': '#e09a2a',
+    'In progress': '#e09a2a',
+    'Solved':      '#4fa3d4',
+    'Resolved':    '#4fa3d4',
+    'Closed':      '#5ab87a',
+    'Done':        '#5ab87a',
+  };
+  var DEFAULT_PRIORITY = {
+    'Critical': '#e05c5c',
+    'High':     '#e07c2a',
+    'Medium':   '#e0c52a',
+    'Low':      '#7ec87e',
+    'Blocker':  '#e05c5c',
+    'Major':    '#e07c2a',
+    'Minor':    '#e0c52a',
+    'Trivial':  '#7ec87e',
+    'None':     '#888888',
+  };
+  var DEFAULT_DOCSTATUS = {
+    'Approved':  '#5ab87a',
+    'Signed':    '#4fa3d4',
+    'In Review': '#e09a2a',
+    'Missing':   '#e05c5c',
+    'Rejected':  '#c0392b',
+  };
+
+  function getMap(section) {
+    if (section === 'status')    return (cfg.colors && cfg.colors.status)    || DEFAULT_STATUS;
+    if (section === 'priority')  return (cfg.colors && cfg.colors.priority)  || DEFAULT_PRIORITY;
+    if (section === 'docstatus') return (cfg.doc_management && cfg.doc_management.status_colors) || DEFAULT_DOCSTATUS;
+    return {};
+  }
+  function setMap(section, map) {
+    if (section === 'status')    { if (!cfg.colors) cfg.colors = {}; cfg.colors.status = map; }
+    if (section === 'priority')  { if (!cfg.colors) cfg.colors = {}; cfg.colors.priority = map; }
+    if (section === 'docstatus') { if (!cfg.doc_management) cfg.doc_management = {}; cfg.doc_management.status_colors = map; }
+  }
+  function listId(section) {
+    return section === 'docstatus' ? 'color-docstatus-list' : 'color-' + section + '-list';
+  }
+
+  function renderColorSection(section) {
+    var list = document.getElementById(listId(section));
+    if (!list) return;
+    list.innerHTML = '';
+    var map = getMap(section);
+    Object.entries(map).forEach(function(kv) {
+      list.appendChild(makeColorRow(section, kv[0], kv[1]));
+    });
+  }
+
+  function makeColorRow(section, label, color) {
+    var row = document.createElement('div');
+    row.className = 'color-row';
+    row.dataset.section = section;
+
+    var preview = document.createElement('div');
+    preview.className = 'color-preview';
+    preview.style.background = color;
+
+    var labelIn = document.createElement('input');
+    labelIn.type = 'text';
+    labelIn.value = label;
+    labelIn.placeholder = 'Status name';
+
+    var colorIn = document.createElement('input');
+    colorIn.type = 'color';
+    colorIn.value = color;
+    colorIn.addEventListener('input', function() { preview.style.background = this.value; });
+
+    var rmBtn = document.createElement('button');
+    rmBtn.className = 'btn-remove';
+    rmBtn.textContent = '✕';
+    rmBtn.addEventListener('click', function() { row.remove(); });
+
+    row.appendChild(preview);
+    row.appendChild(labelIn);
+    row.appendChild(colorIn);
+    row.appendChild(rmBtn);
+    return row;
+  }
+
+  function readColorSection(section) {
+    var list = document.getElementById(listId(section));
+    if (!list) return {};
+    var map = {};
+    list.querySelectorAll('.color-row').forEach(function(row) {
+      var inputs = row.querySelectorAll('input');
+      var label = inputs[0].value.trim();
+      var color = inputs[1].value;
+      if (label) map[label] = color;
+    });
+    return map;
+  }
+
+  // Exposed to onclick in HTML
+  window._addColorRow = function(section) {
+    var list = document.getElementById(listId(section));
+    if (!list) return;
+    list.appendChild(makeColorRow(section, '', '#73b5e2'));
+    list.lastChild.querySelector('input[type="text"]').focus();
+  };
+
+  window.saveColors = async function(andBuild) {
+    if (andBuild === undefined) andBuild = true;
+    setMap('status',    readColorSection('status'));
+    setMap('priority',  readColorSection('priority'));
+    setMap('docstatus', readColorSection('docstatus'));
+    await apiPost('/api/config', cfg);
+    toast('Colors saved');
+  };
+
+  // Hook into populateAll
+  var _origPopulateAll = window.populateAll;
+  window.populateAll = function() {
+    if (_origPopulateAll) _origPopulateAll();
+    renderColorSection('status');
+    renderColorSection('priority');
+    renderColorSection('docstatus');
+  };
+
+  if (cfg && cfg.colors) {
+    renderColorSection('status');
+    renderColorSection('priority');
+    renderColorSection('docstatus');
+  }
+})();
+</script>
+
+
+<script>
+// ── Engineering Docs ─────────────────────────────────────────────
+function _populateEngDocs() {
+  var e = cfg.eng_assets || {};
+  var c = e.columns || {};
+  var set = function(id, v){ var el=document.getElementById(id); if(el) el.value=v||''; };
+  set('eng-path',    e.path||''); set('eng-sheet', e.sheet||'');
+  set('eng-col-tag', c.tag||''); set('eng-col-desc', c.desc||''); set('eng-col-type', c.type||'');
+  set('eng-col-disc',c.discipline||''); set('eng-col-dn', c.dn||''); set('eng-col-pn', c.pn||'');
+  set('eng-col-class',c.pipeclass||''); set('eng-col-medium', c.medium||''); set('eng-col-temp', c.temp||'');
+  set('eng-col-mat', c.mat||''); set('eng-col-insul', c.insul||''); set('eng-col-pid', c.p_and_id||'');
+  set('eng-col-iso', c.isometry||''); set('eng-col-line', c.line_list||'');
+}
+window.saveEngDocs = async function(andBuild) {
+  if (andBuild===undefined) andBuild=true;
+  var g = function(id){ var el=document.getElementById(id); return el?el.value.trim():''; };
+  cfg.eng_assets = {
+    path: g('eng-path'), sheet: g('eng-sheet'),
+    columns: {
+      tag: g('eng-col-tag')||'Tag Number', desc: g('eng-col-desc')||'Description',
+      type: g('eng-col-type')||'Equipment Type', discipline: g('eng-col-disc')||'Discipline',
+      dn: g('eng-col-dn')||'Nominal Diameter', pn: g('eng-col-pn')||'Pressure Rating',
+      pipeclass: g('eng-col-class')||'Pipe Class', medium: g('eng-col-medium')||'Medium',
+      temp: g('eng-col-temp')||'Design Temperature', mat: g('eng-col-mat')||'Material',
+      insul: g('eng-col-insul')||'Insulation', p_and_id: g('eng-col-pid')||'P&ID Reference',
+      isometry: g('eng-col-iso')||'Isometry Number', line_list: g('eng-col-line')||'Line List Number',
+    }
+  };
+  await apiPost('/api/config', cfg);
+  toast('Engineering Docs config saved');
+};
+
+// ── MTO ──────────────────────────────────────────────────────────
+function _populateMto() {
+  var m = cfg.mto || {};
+  var iso = m.isometries || {}; var ic = iso.columns || {};
+  var fit = m.fittings   || {}; var fc = fit.columns || {};
+  var set = function(id, v){ var el=document.getElementById(id); if(el) el.value=v||''; };
+  set('mto-rev-base', m.rev_base||'Rev A'); set('mto-rev-cmp', m.rev_cmp||'Rev B');
+  set('mto-iso-path', iso.path||''); set('mto-iso-sheet', iso.sheet||'');
+  set('mto-iso-col-num',  ic.iso_number||''); set('mto-iso-col-disc', ic.discipline||'');
+  set('mto-iso-col-line', ic.line_number||''); set('mto-iso-col-base', ic.revision_base||'');
+  set('mto-iso-col-cmp',  ic.revision_cmp||''); set('mto-iso-col-stat', ic.status||'');
+  set('mto-fit-path', fit.path||''); set('mto-fit-sheet', fit.sheet||'');
+  set('mto-fit-col-desc', fc.description||''); set('mto-fit-col-dn', fc.dn||'');
+  set('mto-fit-col-mat',  fc.material||''); set('mto-fit-col-qbase', fc.qty_base||'');
+  set('mto-fit-col-qcmp', fc.qty_cmp||''); set('mto-fit-col-unit', fc.unit||'');
+}
+window.saveMto = async function(andBuild) {
+  if (andBuild===undefined) andBuild=true;
+  var g = function(id){ var el=document.getElementById(id); return el?el.value.trim():''; };
+  cfg.mto = {
+    rev_base: g('mto-rev-base')||'Rev A', rev_cmp: g('mto-rev-cmp')||'Rev B',
+    isometries: { path: g('mto-iso-path'), sheet: g('mto-iso-sheet'),
+      columns: { iso_number: g('mto-iso-col-num')||'ISO Number', discipline: g('mto-iso-col-disc')||'Discipline',
+        line_number: g('mto-iso-col-line')||'Line Number', revision_base: g('mto-iso-col-base')||'Rev A Length (mm)',
+        revision_cmp: g('mto-iso-col-cmp')||'Rev B Length (mm)', status: g('mto-iso-col-stat')||'Status' } },
+    fittings: { path: g('mto-fit-path'), sheet: g('mto-fit-sheet'),
+      columns: { description: g('mto-fit-col-desc')||'Description', dn: g('mto-fit-col-dn')||'DN',
+        material: g('mto-fit-col-mat')||'Material', qty_base: g('mto-fit-col-qbase')||'Qty Rev A',
+        qty_cmp: g('mto-fit-col-qcmp')||'Qty Rev B', unit: g('mto-fit-col-unit')||'Unit' } }
+  };
+  await apiPost('/api/config', cfg);
+  toast('MTO config saved');
+};
+
+// ── Costs ────────────────────────────────────────────────────────
+function _populateCosts() {
+  var c = cfg.costs || {};
+  var a = c.actuals || {}; var ac = a.columns || {};
+  var s = c.scurve  || {}; var sc = s.columns || {};
+  var set = function(id, v){ var el=document.getElementById(id); if(el) el.value=v||''; };
+  set('costs-currency', c.currency||'CHF');
+  var srcEl = document.getElementById('costs-source');
+  if (srcEl) srcEl.value = c.source||'mock';
+  set('costs-act-path',  a.path||''); set('costs-act-sheet', a.sheet||'');
+  set('costs-col-wbs',   ac.wbs||''); set('costs-col-desc',  ac.desc||'');
+  set('costs-col-budget',ac.budget||''); set('costs-col-actual', ac.actual||'');
+  set('costs-col-committed', ac.committed||'');
+  set('costs-sc-path',   s.path||''); set('costs-sc-sheet', s.sheet||'');
+  set('costs-sc-col-date', sc.date||''); set('costs-sc-col-act', sc.actual||'');
+  set('costs-sc-col-plan', sc.planned||''); set('costs-sc-col-fc', sc.forecast||'');
+}
+window.saveCosts = async function(andBuild) {
+  if (andBuild===undefined) andBuild=true;
+  var g = function(id){ var el=document.getElementById(id); return el?el.value.trim():''; };
+  cfg.costs = {
+    currency: g('costs-currency')||'CHF',
+    source:   (document.getElementById('costs-source')||{}).value||'mock',
+    actuals: { path: g('costs-act-path'), sheet: g('costs-act-sheet'),
+      columns: { wbs: g('costs-col-wbs')||'WBS Element', desc: g('costs-col-desc')||'Description',
+        budget: g('costs-col-budget')||'Budget', actual: g('costs-col-actual')||'Actual Costs',
+        committed: g('costs-col-committed')||'Committed' } },
+    scurve: { path: g('costs-sc-path'), sheet: g('costs-sc-sheet'),
+      columns: { date: g('costs-sc-col-date')||'Date', actual: g('costs-sc-col-act')||'Actual Cumulative',
+        planned: g('costs-sc-col-plan')||'Planned Cumulative', forecast: g('costs-sc-col-fc')||'Forecast' } }
+  };
+  await apiPost('/api/config', cfg);
+  toast('Costs config saved');
+};
+
+// ── Hook into populateAll ────────────────────────────────────────
+var _origPA2 = window.populateAll;
+window.populateAll = function() {
+  if (_origPA2) _origPA2();
+  _populateEngDocs();
+  _populateMto();
+  _populateCosts();
+};
+if (cfg && (cfg.eng_assets || cfg.mto || cfg.costs)) {
+  _populateEngDocs(); _populateMto(); _populateCosts();
+}
+</script>
+
+
+<script>
+// ── Scope ────────────────────────────────────────────────────────
+function _populateScope() {
+  var s = cfg.scope || {};
+  var c = s.columns || {};
+  var set = function(id, v){ var el=document.getElementById(id); if(el) el.value=v||''; };
+  set('scope-path',       s.path||'');
+  set('scope-sheet',      s.sheet||'');
+  set('scope-col-code',   c.system_code||'');
+  set('scope-col-name',   c.system_name||'');
+  set('scope-col-disc',   c.discipline||'');
+  set('scope-col-co',     c.company||'');
+  set('scope-col-area',   c.area||'');
+  set('scope-col-doctype',c.doc_type||'');
+  set('scope-col-req',    c.required||'');
+  set('scope-col-docnum', c.doc_number||'');
+}
+window.saveScope = async function(andBuild) {
+  if (andBuild===undefined) andBuild=true;
+  var g = function(id){ var el=document.getElementById(id); return el?el.value.trim():''; };
+  cfg.scope = {
+    path:  g('scope-path'),
+    sheet: g('scope-sheet'),
+    columns: {
+      system_code: g('scope-col-code')  ||'System Code',
+      system_name: g('scope-col-name')  ||'System Name',
+      discipline:  g('scope-col-disc')  ||'Discipline',
+      company:     g('scope-col-co')    ||'Company',
+      area:        g('scope-col-area')  ||'Area',
+      doc_type:    g('scope-col-doctype')||'Document Type',
+      required:    g('scope-col-req')   ||'Required',
+      doc_number:  g('scope-col-docnum')||'Document Number',
+    }
+  };
+  await apiPost('/api/config', cfg);
+  toast('Scope config saved');
+};
+
+// Hook into populateAll
+var _origPA3 = window.populateAll;
+window.populateAll = function() {
+  if (_origPA3) _origPA3();
+  _populateScope();
+};
+if (cfg && cfg.scope) _populateScope();
+
+// ═══ Data build functions ════════════════════════════════════════════════════
+
+async function saveDataPassword() {
+  const pw = (document.getElementById('cfg-data-password')?.value ?? '').trim();
+  // Re-fetch latest config so we don't overwrite other fields
+  const latest = await apiGet('/api/config');
+  latest.data_password = pw;
+  await apiPost('/api/config', latest);
+  // Update local cfg too
+  cfg.data_password = pw;
+  toast('Data password saved to config.yaml');
+}
+
+async function saveDataOutput() {
+  const val = (document.getElementById('cfg-data-output')?.value ?? '').trim() || 'data.js';
+  const latest = await apiGet('/api/config');
+  latest.data_output = val;
+  await apiPost('/api/config', latest);
+  cfg.data_output = val;
+  toast('Output path saved');
+}
+
+async function loadDataInfo() {
+  try {
+    const d = await apiGet('/api/data/info');
+    if (!d) return;
+    const el = document.getElementById('data-file-info');
+    if (!el) return;
+    if (d.exists) {
+      el.innerHTML =
+        '<span style="color:#1D9E75">✓</span> ' +
+        d.path.replace(/.*[\\/]/, '') +
+        ' &nbsp;•&nbsp; ' + d.size_kb + ' KB' +
+        ' &nbsp;•&nbsp; ' + (d.n ?? '?') + ' issues' +
+        ' &nbsp;•&nbsp; built ' + d.modified;
+    } else {
+      el.innerHTML = '<span style="color:#E09A2A">⚠</span> data.js not yet built — press ⚡ Build Data.';
+    }
+  } catch(e) {}
+}
+
+async function startDataBuild() {
+  showSection('build');
+  if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
+  const res = await apiPost('/api/data/build', {});
+  if (!res || !res.ok) { toast(res?.error || 'Failed to start data build', 'error'); return; }
+  setBuildStatus('running');
+  document.getElementById('build-log').textContent = '';
+  _pollInterval = setInterval(pollBuild, 400);
+}
+
+async function dataAndPush() {
+  const latest = await apiGet('/api/config');
+  latest.git = latest.git || {};
+  latest.git.auto_push = true;
+  await apiPost('/api/config', latest);
+  cfg.git = latest.git;
+  await startDataBuild();
+}
+
+async function pushDataOnly() {
+  showSection('build');
+  if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
+  const msg = 'Update data: ' + new Date().toISOString().slice(0,16).replace('T',' ') + ' UTC';
+  const res = await apiPost('/api/data/push', { commit_msg: msg });
+  if (!res || !res.ok) { toast(res?.error || 'Push failed', 'error'); return; }
+  setBuildStatus('running');
+  document.getElementById('build-log').textContent = '';
+  _pollInterval = setInterval(pollBuild, 400);
+}
+
+// Auto-refresh data info every 30s and on page load
+(function() {
+  function _init() { loadDataInfo(); setInterval(loadDataInfo, 30000); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _init);
+  else _init();
+})();
+
+</script>
+
+</body>
+</html>
