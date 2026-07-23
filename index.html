@@ -542,7 +542,7 @@ html.compact table { font-size: .65rem; }
 /* ── Vertical navigation ── */
 html[data-nav="vertical"] .tab-bar {
   flex-direction: column;
-  width: 180px;
+  width: 210px;
   flex-shrink: 0;
   height: var(--full-h);
   padding: 8px 0;
@@ -550,6 +550,7 @@ html[data-nav="vertical"] .tab-bar {
   border-bottom: none;
   border-right: 2px solid rgba(115,181,226,.15);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 html[data-nav="vertical"] .shell {
   flex-direction: row;
@@ -557,7 +558,7 @@ html[data-nav="vertical"] .shell {
 html[data-nav="vertical"] .tab-btn {
   flex-direction: row;
   justify-content: flex-start;
-  padding: 9px 16px;
+  padding: 9px 14px;
   gap: 8px;
   border-bottom: none;
   border-right: 3px solid transparent;
@@ -570,10 +571,18 @@ html[data-nav="vertical"] .tab-btn.active {
   border-right-color: var(--rhyba-teal-light);
   border-bottom-color: transparent;
 }
+html[data-nav="vertical"] .tab-btn > span:not(.tab-icon) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
 html[data-nav="vertical"] .tab-icon {
   font-size: .85rem;
   opacity: .7;
-  width: 18px;
+  width: 24px;
+  overflow: hidden;
   text-align: center;
   flex-shrink: 0;
 }
@@ -792,7 +801,7 @@ body {
   transition: background .12s, color .12s;
 }
 .size-btn:hover { background: rgba(115,181,226,.12); color: var(--rhyba-teal-light); }
-.size-btn.active { background: rgba(115,181,226,.18); color: #fff; border-color: var(--rhyba-teal-light); }
+.size-btn.active { background: rgba(115,181,226,.18); color: var(--text1); border-color: var(--rhyba-teal-light); }
 /* ── Settings gear button ── */
 .btn-settings {
   background: transparent;
@@ -2496,8 +2505,8 @@ let CONFIG     = {"dashboard":{"title":"PPIH Test Instance","subtitle":"Isolated
 let PROJECTS   = {};
 let MSP_DATA   = [];
 let DOC_DATA   = {"documents":[]};
-let BUILD_TIME = "2026-07-23 10:27 UTC";
-let BUILD_INFO = "Built 2026-07-23 10:27 UTC";
+let BUILD_TIME = "2026-07-23 10:30 UTC";
+let BUILD_INFO = "Built 2026-07-23 10:30 UTC";
 
 
 // ══════════════════════════════════════════════════════════════════
