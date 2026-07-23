@@ -328,6 +328,44 @@ _attachAllChartTooltips()
 
 ---
 
+## Entra ID Zugriffskontrolle (Rollout in Phasen, Stand 2026-07-23)
+
+**Problem:** ein einziges geteiltes `data_password` für alle Engineers → verbreitet sich
+zwangsläufig informell in der Organisation, keine Widerrufbarkeit pro Person, kein Audit.
+
+**Lösung:** Entra ID (Azure AD) regelt, wer die Seite überhaupt erreicht
+(`staticwebapp.config.json` `auth`/`allowedRoles`), die AES-256-GCM-Verschlüsselung von
+`data.js` bleibt unverändert bestehen — das Passwort wird aber nicht mehr getippt/im
+Client-Code eingebettet, sondern von einer Azure Function (`api/get_data_key`) automatisch
+an bereits authentifizierte Browser ausgeliefert. Eine kopierte `index.html`+`data.js`
+außerhalb der echten Seite kann diese Function nicht erreichen (kein SWA-Auth-Cookie) und
+fällt auf den alten manuellen Passwort-Prompt zurück, den niemand mehr kennt.
+
+**Phase 1 (Code, sicher, bereits deployed):**
+- `api/function_app.py` — liest `x-ms-client-principal` Header, prüft `userRoles`, liefert
+  `DATA_PASSWORD` (App Setting, nicht Git) nur an authentifizierte Requests.
+- `FETCH_JS` (`build_dashboard.py`) versucht `/api/get-data-key` zuerst; schlägt das fehl
+  (lokal, oder kopierte Dateien außerhalb der echten Domain), zeigt es den alten manuellen
+  Passwort-Prompt — unverändert, kein Verhaltensbruch ohne Phase 2/3.
+
+**Phase 2 (manuell, außerhalb dieses Repos, noch offen — IT-Admin-Zugriff zu Entra ID nötig):**
+Standard-Plan-Upgrade der Static Web App (~9$/Monat, Free-Plan unterstützt keine
+mandantenbeschränkte Anmeldung), Entra App Registration (Single-Tenant), Client Secret,
+Azure-Portal Application Settings: `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `DATA_PASSWORD`.
+
+**Phase 3 (erst nach Phase 2!):** `auth`-Block + `allowedRoles:["authenticated"]` Route-Regel
+in `staticwebapp.config.json` — das ist der Schritt, der die Seite tatsächlich sperrt. Vor
+Phase 2 deployt, sperrt es alle aus (Auth verweist auf nicht existierende App Registration).
+
+**Wichtig:** `DATA_PASSWORD` muss ab Phase 2 an DREI Stellen synchron gehalten werden —
+GitHub Secret (baut `data.js`), Azure SWA Application Setting (Function liefert es aus),
+und lokal in `config.private.yaml` (Admin-Board). Rotation ohne alle drei zu aktualisieren
+→ "Incorrect password" für alle, auch mit gültigem Entra-Login.
+
+Plan-Datei mit vollem Detail: siehe Session-Historie / `splendid-wondering-charm.md`.
+
+---
+
 ## Lizenz-System (ECDSA P-256)
 
 - **Dev-Build:** kein `license:` in config → alle Tabs aktiv, Console: `[DEV BUILD]`
@@ -431,6 +469,7 @@ zeigt dann alte Werte, während `build_dashboard.py` bereits die neuen einbaut.
 | Scope — Equipment Tag Register | TODO |
 | Scope — Interface Log | TODO |
 | Kunden-Paket | admin_kunde.html, admin_server_kunde.py, setup_kunde.bat — wird aktuell geprüft/aufgeräumt |
+| Entra ID Zugriffskontrolle Phase 2/3 | Code (Phase 1) deployed. Wartet auf Standard-Plan-Upgrade + Entra App Registration (IT-Admin-Zugriff nötig) — siehe eigener Abschnitt oben |
 
 ---
 

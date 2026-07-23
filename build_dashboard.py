@@ -192,6 +192,35 @@ if args.lean:
   const _dataUrl = 'data.js';
   const _cachedPw = sessionStorage.getItem('bcf-pw') || null;
 
+  // Entra ID auto-unlock: if Azure has already authenticated this request
+  // (staticwebapp.config.json allowedRoles gate), /api/get-data-key returns
+  // the password with no human ever typing or seeing it. Anywhere that API
+  // isn't reachable — local dev, or a copy of these files opened outside
+  // the real deployment — this 404s/network-errors and falls back to the
+  // manual password prompt below, same as before this existed.
+  async function _tryAutoUnlock(onSuccess) {
+    try {
+      const r = await fetch('/api/get-data-key', {cache: 'no-store'});
+      if (!r.ok) throw new Error('auto-unlock unavailable');
+      const body = await r.json();
+      if (!body.password) throw new Error('no password in response');
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = _dataUrl + '?v=' + Date.now();
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('data.js load failed'));
+        document.head.appendChild(s);
+      });
+      if (!window._BCF_DATA) throw new Error('data.js loaded but window._BCF_DATA not set');
+      await _decryptAndLoad(window._BCF_DATA, body.password, null);
+      const _lov = document.getElementById('loading-overlay');
+      if (_lov) _lov.remove();
+      onSuccess();
+    } catch(e) {
+      _showLoginOverlay(onSuccess);
+    }
+  }
+
   function _showLoginOverlay(onSuccess) {
     const shell = document.querySelector('.shell');
     const _lov  = document.getElementById('loading-overlay');
@@ -316,7 +345,7 @@ if args.lean:
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    _showLoginOverlay(function() {
+    _tryAutoUnlock(function() {
       _reloadAll();
       if(typeof _rebuildProjectDropdownForDept==='function') _rebuildProjectDropdownForDept();
     });
