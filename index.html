@@ -2505,8 +2505,8 @@ let CONFIG     = {"dashboard":{"title":"PPIH Test Instance","subtitle":"Isolated
 let PROJECTS   = {};
 let MSP_DATA   = [];
 let DOC_DATA   = {"documents":[]};
-let BUILD_TIME = "2026-07-23 10:38 UTC";
-let BUILD_INFO = "Built 2026-07-23 10:38 UTC";
+let BUILD_TIME = "2026-07-23 11:04 UTC";
+let BUILD_INFO = "Built 2026-07-23 11:04 UTC";
 
 
 // ══════════════════════════════════════════════════════════════════
@@ -4921,6 +4921,10 @@ function setSize(size) {
   });
   // Redraw charts from cached worker aggregation — never call applyFilters
   requestAnimationFrame(() => {
+    // Title/topbar height can change at larger sizes (wrapping) — re-measure
+    // before any chart reads container dimensions off stale --topbar-h/--full-h.
+    if (typeof window._measureLayout === 'function') window._measureLayout();
+
     Object.keys(chartInstances).forEach(k => { delete chartInstances[k]; });
     const grid = document.getElementById("chart-grid");
     if (grid) grid.removeAttribute("data-built");
@@ -4932,6 +4936,27 @@ function setSize(size) {
     } else {
       renderCharts();
     }
+    // renderCharts() above only rebuilds the Issue Management analysis grid —
+    // every other tab's charts were drawn once at load and never told about
+    // the new container size, so their canvases stretch/squeeze instead of
+    // redrawing. Re-render them too.
+    const _resizeAffectedCharts = () => {
+      if (typeof _renderOverview === 'function') _renderOverview();
+      if (typeof _renderCosts === 'function') _renderCosts();
+      if (typeof _engInit === 'function') _engInit();
+      if (typeof _docReinit === 'function') _docReinit();
+      if (typeof _renderScope === 'function') _renderScope();
+      if (typeof _renderScopeEvolution === 'function') _renderScopeEvolution();
+    };
+    _resizeAffectedCharts();
+    // A single pass right after the attribute change isn't enough — card
+    // heights (KPI rows, titles that wrap) can keep settling for another
+    // frame or two, same race the costs-tab switch already works around
+    // below with its own delayed second pass. Repeat once layout is stable.
+    setTimeout(() => {
+      _resizeAffectedCharts();
+      if (typeof _attachAllChartTooltips === 'function') _attachAllChartTooltips();
+    }, 120);
   });
   try { sessionStorage.setItem("bcf-size", size); } catch(e) {}
   // Sync settings
@@ -6265,6 +6290,9 @@ function switchTab(id, btn) {
   }
   measureLayout();
   window.addEventListener('resize', measureLayout);
+  // Exposed so setSize() can re-measure after a title/topbar height change
+  // (font-size changes don't fire a window resize event on their own).
+  window._measureLayout = measureLayout;
 })();
 
 // ── boot ──────────────────────────────────────────
@@ -7348,6 +7376,9 @@ function _ovIssueChart() {
   const cvs = document.getElementById('ov-issue-chart');
   if (!cvs || typeof Chart === 'undefined') return;
   if (cvs._chart) cvs._chart.destroy();
+  const _wrap = cvs.parentElement;
+  cvs.width  = _wrap.offsetWidth  || 400;
+  cvs.height = _wrap.offsetHeight || 200;
   const agg = window._wLastAgg || {};
   const statusData = agg.status || {};
   const STATUS_ORDER = ['Open','In progress','In Progress','Solved','Resolved','Closed','Done'];
@@ -7360,7 +7391,7 @@ function _ovIssueChart() {
     type: 'doughnut',
     data: { labels, datasets:[{ data: labels.map(l=>statusData[l]),
       backgroundColor: labels.map(l=>colorFor('status',l,0)||'#607880'), borderWidth:0 }] },
-    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
+    options: { responsive:false, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
   });
   if (typeof window._attachChartTooltip === 'function') window._attachChartTooltip(cvs, 'Issues by Status');
 }
@@ -7369,6 +7400,9 @@ function _ovDocChart() {
   const cvs = document.getElementById('ov-doc-chart');
   if (!cvs || typeof Chart === 'undefined') return;
   if (cvs._chart) cvs._chart.destroy();
+  const _wrap = cvs.parentElement;
+  cvs.width  = _wrap.offsetWidth  || 400;
+  cvs.height = _wrap.offsetHeight || 200;
   const dd = (typeof DOC_DATA!=='undefined'&&DOC_DATA) ? DOC_DATA : {};
   // Derive status_counts from documents array if not pre-computed
   let sc = dd.status_counts || {};
@@ -7382,7 +7416,7 @@ function _ovDocChart() {
     type: 'doughnut',
     data: { labels, datasets:[{ data: labels.map(l=>sc[l]),
       backgroundColor: labels.map(l=>colors[l]||'#607880'), borderWidth:0 }] },
-    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
+    options: { responsive:false, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
   });
   if (typeof window._attachChartTooltip === 'function') window._attachChartTooltip(cvs, 'Documents by Status');
 }
@@ -7393,8 +7427,13 @@ function _ovCostChart() {
   if (cvs._chart) cvs._chart.destroy();
   const cd = COST_DATA;
   if (!cd || !cd.scurve) return;
+  const _wrap = cvs.parentElement;
+  cvs.width  = _wrap.offsetWidth  || 400;
+  cvs.height = _wrap.offsetHeight || 200;
   const isDark = document.documentElement.getAttribute('data-theme')==='dark';
   const gridColor = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+  const _rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 13;
+  const _axisF = Math.round(_rem * 0.72);
   cvs._chart = new Chart(cvs, {
     type: 'line',
     data: {
@@ -7406,10 +7445,10 @@ function _ovCostChart() {
           borderColor:'#5ab87a', fill:false, tension:.4, pointRadius:2 },
       ]
     },
-    options: { responsive:true, maintainAspectRatio:false,
+    options: { responsive:false, maintainAspectRatio:false,
       plugins:{ legend:{ display:false } },
-      scales:{ x:{ grid:{color:gridColor}, ticks:{font:{size:9}} },
-               y:{ grid:{color:gridColor}, ticks:{font:{size:9},
+      scales:{ x:{ grid:{color:gridColor}, ticks:{font:{size:_axisF}} },
+               y:{ grid:{color:gridColor}, ticks:{font:{size:_axisF},
                  callback: v => (v/1000).toFixed(0)+'K' } } } }
   });
   if (typeof window._attachChartTooltip === 'function') window._attachChartTooltip(cvs, 'Cost S-Curve');
@@ -8126,6 +8165,9 @@ function _renderCosts() {
   const fmtK = n => (n/1000).toFixed(0) + 'K';
   const isDark = document.documentElement.getAttribute('data-theme')==='dark';
   const gridColor = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+  const _rem  = parseFloat(getComputedStyle(document.documentElement).fontSize) || 13;
+  const _axisF = Math.round(_rem * 0.72);
+  const _legF  = Math.round(_rem * 0.8);
 
   // KPIs
   const variance = cd.budget_total - cd.forecast_total;
@@ -8167,10 +8209,10 @@ function _renderCosts() {
     },
     options: {
       responsive:false, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{color: isDark?'#8ab4c4':'#3a5060',font:{size:10}} } },
+      plugins:{ legend:{ labels:{color: isDark?'#8ab4c4':'#3a5060',font:{size:_legF}} } },
       scales:{
-        x:{ grid:{color:gridColor}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:9}} },
-        y:{ grid:{color:gridColor}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:9},
+        x:{ grid:{color:gridColor}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:_axisF}} },
+        y:{ grid:{color:gridColor}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:_axisF},
             callback:v=>(v/1000).toFixed(0)+'K '+cur} }
       }
     }
@@ -8197,11 +8239,11 @@ function _renderCosts() {
         ]
       },
       options: { responsive:false, maintainAspectRatio:false, indexAxis:'y',
-        plugins:{ legend:{ labels:{color: isDark?'#8ab4c4':'#3a5060',font:{size:10}} } },
+        plugins:{ legend:{ labels:{color: isDark?'#8ab4c4':'#3a5060',font:{size:_legF}} } },
         scales:{
-          x:{ grid:{color:gridColor}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:9},
+          x:{ grid:{color:gridColor}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:_axisF},
               callback:v=>fmtK(v)+' '+cur } },
-          y:{ grid:{display:false}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:9}} }
+          y:{ grid:{display:false}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:_axisF}} }
         }
       }
     });
@@ -8291,6 +8333,10 @@ function _renderCostsWbs() {
   const cd = COST_DATA;
   const isDark = document.documentElement.getAttribute('data-theme')==='dark';
   const gridColor = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+  const _rem  = parseFloat(getComputedStyle(document.documentElement).fontSize) || 13;
+  const _axisF  = Math.round(_rem * 0.72);
+  const _axisFx = Math.round(_rem * 0.64);
+  const _legF   = Math.round(_rem * 0.8);
   wbsCvs._chart = new Chart(wbsCvs, {
     type: 'bar',
     data: {
@@ -8303,10 +8349,10 @@ function _renderCostsWbs() {
     },
     options: {
       responsive:false, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{color: isDark?'#8ab4c4':'#3a5060',font:{size:10}} } },
+      plugins:{ legend:{ labels:{color: isDark?'#8ab4c4':'#3a5060',font:{size:_legF}} } },
       scales:{
-        x:{ grid:{display:false}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:8},maxRotation:30} },
-        y:{ grid:{color:gridColor}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:9},
+        x:{ grid:{display:false}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:_axisFx},maxRotation:30} },
+        y:{ grid:{color:gridColor}, ticks:{color: isDark?'#5a7a8a':'#6a8090',font:{size:_axisF},
             callback:v=>(v/1000).toFixed(0)+'K'} }
       }
     }
