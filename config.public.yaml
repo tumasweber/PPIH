@@ -1,0 +1,153 @@
+dashboard:
+  title: "PPIH Test Instance"
+  subtitle: "Isolated deployment — infra/security testing"
+  theme: dark
+snapshots:
+  enabled: true
+  thumb_width: 480
+  thumb_height: 270
+  jpeg_quality: 82
+  save_full_size: true
+bcf_sources:
+  - "./exports/*.bcf"
+  - "./exports/*.xlsx"
+spatial_field_priority:
+  - room
+  - space
+  - zone
+  - area
+  - level
+  - grid_location
+msp_xml_path: "./exports/EPC_Project_Plan.xml"
+output_path: "index.html"
+data_output: "data.js"
+discipline_map:
+  A: Architecture
+  E: Electrical
+  H: HVAC
+  P: Process Engineering
+  S: Sanitary
+  Q: BIM/3D Coordination
+discipline_colors:
+  A: "#aab6be"
+  E: "#e09a2a"
+  H: "#0081b1"
+  P: "#e05c5c"
+  S: "#5ab87a"
+  Q: "#73b5e2"
+filters:
+  status: []
+  type: []
+  priority: []
+  label_include: []
+  label_exclude: []
+colors:
+  status:
+    Open: "#e05c5c"
+    In Progress: "#e09a2a"
+    In progress: "#e09a2a"
+    Solved: "#5ab87a"
+    Resolved: "#4fa3d4"
+    Closed: "#878787"
+    Done: "#5ab87a"
+  priority:
+    Critical: "#e05c5c"
+    High: "#e07c2a"
+    Medium: "#e0c52a"
+    Low: "#7ec87e"
+    Blocker: "#e05c5c"
+    Major: "#e07c2a"
+    Minor: "#e0c52a"
+    Trivial: "#7ec87e"
+    None: "#888888"
+layout:
+  kpi_row:
+    - open_count
+    - critical_count
+    - overdue_count
+    - avg_age_days
+  charts:
+    - { type: doughnut, field: status,     title: "By status",           col: 1 }
+    - { type: bar,      field: type,       title: "By issue type",       col: 2 }
+    - { type: bar,      field: priority,   title: "By priority",         col: 3 }
+    - { type: bar,      field: assigned,   title: "By assignee",         col: 1 }
+    - { type: bar,      field: discipline, title: "By discipline",       col: 2 }
+    - { type: bar,      field: spatial,    title: "By location (Room/Zone)", col: 3 }
+    - { type: bar,      field: level,      title: "By level/storey",     col: 1 }
+    - { type: timeline, field: created,    title: "Issues over time",    col: 2 }
+  table:
+    columns: [title, status, type, priority, assigned, due, age_days, level, spatial]
+    default_sort: due
+    sort_dir: asc
+    page_size: 20
+msp_task_map: {}
+git:
+  auto_push: true
+doc_management:
+  enabled: true
+  master_register:
+    path: ./exports/docregister/master_register.xlsx
+    sheet: Master Register
+    columns:
+      doc_number: Document Number
+      title: Document Title
+      discipline: Discipline
+      asset_type: Asset Type
+      required_status: Required Status
+      required_date: Required Date
+  asset_types: [Piping, Valves, Instruments, Equipment, Civil, Electrical, BIM]
+  status_colors:
+    Approved: "#5ab87a"
+    Signed: "#4fa3d4"
+    In Review: "#e09a2a"
+    Missing: "#e05c5c"
+    Rejected: "#c0392b"
+  sources:
+    pid:
+      enabled: true
+      label: P&ID (AutoCAD Plant 3D)
+      path: ./exports/docregister/pid_export.xlsx
+      sheet: P&ID Export
+      columns:
+        doc_number: Tag Number
+        title: Description
+        discipline: Type
+        status: Status
+        revision: Revision
+        date: Date
+        modified_by: Engineer
+      status_map:
+        Approved: Approved
+        Signed: Signed
+        In Review: In Review
+        Missing: Missing
+      source_type: file
+    navisworks:
+      enabled: true
+      label: 3D Model (Navisworks)
+      path: ./exports/docregister/navisworks_export.xlsx
+      sheet: Navisworks Export
+      columns:
+        doc_number: Document Number
+        title: Description
+        discipline: Discipline
+        status: Status
+        revision: Revision
+        date: Date Modified
+        modified_by: Approved By
+      status_map:
+        Approved: Approved
+        Signed: Signed
+        In Review: In Review
+        Missing: Missing
+      source_type: file
+organisation:
+  departments:
+    - id: test
+      name: Test
+      projects:
+        - id: ppih-test
+          name: PPIH Test Project
+          subprojects: []
+source_assignments: {}
+source_patterns: []
