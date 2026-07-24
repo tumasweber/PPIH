@@ -1456,32 +1456,14 @@ tbody td.title-cell { max-width: 300px; white-space: nowrap; overflow: hidden; t
 .doc-misses { color: #e05c5c; font-size: .75rem; }
 
 /* ── modal ───────────────────────────────────────── */
-.modal-backdrop {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.6); z-index: 100;
-  align-items: flex-start; justify-content: center;
-  padding: 32px 16px; overflow-y: auto;
-}
-.modal-backdrop.open { display: flex; }
-.modal {
-  background: var(--bg1); border: 1px solid var(--border);
-  border-top: 3px solid var(--rhyba-teal);
-  border-radius: var(--r);
-  width: 100%; max-width: 720px;
-  position: relative;
-  animation: modal-in .15s ease;
-}
-@keyframes modal-in { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
 .modal-header {
   padding: 20px 24px 16px;
   border-bottom: 1px solid var(--border);
 }
-.modal-header h2 { font-size: .95rem; font-weight: 700; line-height: 1.4; padding-right: 24px; }
+.modal-title { font-size: .95rem; font-weight: 700; line-height: 1.4; }
 .modal-meta {
   display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;
 }
-.modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; cursor: pointer; color: var(--text3); font-size: 1.1rem; transition: color .15s; }
-.modal-close:hover { color: var(--text1); }
 /* snapshot area */
 .modal-snapshot {
   position: relative;
@@ -1867,6 +1849,39 @@ tbody td.title-cell { max-width: 300px; white-space: nowrap; overflow: hidden; t
   background: var(--bg1);
   border: 1px solid var(--border);
   border-radius: 4px;
+}
+
+/* ── Issue Management: list + detail split (mirrors .engdocs-layout) ── */
+.issues-layout {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.issue-row { cursor: pointer; }
+.issue-row.active { background: rgba(0,129,177,.15); }
+.issue-row.active td:first-child { box-shadow: inset 3px 0 0 var(--rhyba-teal-light); }
+.issue-detail-col {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--rhyba-teal);
+  border-radius: var(--r);
+  overflow-y: auto;
+  max-height: 720px;
+}
+.issue-detail-empty {
+  height: 100%;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  font-size: .8rem;
+  gap: 10px;
+}
+@media (max-width: 1100px) {
+  .issues-layout { grid-template-columns: 1fr; }
 }
 
 /* ── Costs ──────────────────────────────────────────────────── */
@@ -2505,8 +2520,8 @@ let CONFIG     = {"dashboard":{"title":"PPIH Test Instance","subtitle":"Isolated
 let PROJECTS   = {};
 let MSP_DATA   = [];
 let DOC_DATA   = {"documents":[]};
-let BUILD_TIME = "2026-07-24 13:29 UTC";
-let BUILD_INFO = "Built 2026-07-24 13:29 UTC";
+let BUILD_TIME = "2026-07-24 13:53 UTC";
+let BUILD_INFO = "Built 2026-07-24 13:53 UTC";
 
 
 // ══════════════════════════════════════════════════════════════════
@@ -3430,6 +3445,7 @@ window.filtered = [...RAW_DATA];  // global so worker RESULT handler can update 
 let sortCol  = CONFIG.layout?.table?.default_sort || "due";
 let sortDir  = CONFIG.layout?.table?.sort_dir     || "asc";
 let page     = 1;
+let _selectedIssueGuid = null;  // drives both the issue-detail panel and the .active row highlight
 const PAGE_SIZE = (() => {
   const cfg = CONFIG.layout?.table?.page_size || 20;
   // Larger pages for big datasets — DOM cost is low with pagination
@@ -4235,7 +4251,8 @@ function renderTableBody() {
       if (c==="labels") return `<td>${(issue.labels||[]).join(", ")}</td>`;
       return `<td>${escHtml(String(issue[c]??"—"))}</td>`;
     }).join("");
-    return `<tr onclick="openModal(${start+ri})">${cells}</tr>`;
+    const activeCls = issue.guid === _selectedIssueGuid ? " active" : "";
+    return `<tr class="issue-row${activeCls}" onclick="_selectIssue(${start+ri})">${cells}</tr>`;
   }).join("");
 }
 function renderTable() {
@@ -4271,8 +4288,13 @@ function _avatarColor(name) {
   return palette[h % palette.length];
 }
 
-function openModal(idx) {
+function _selectIssue(idx) {
   const i = filtered[idx]; if (!i) return;
+  _selectedIssueGuid = i.guid;
+  renderTableBody();  // recompute .active on rows — same variable drives both
+
+  document.getElementById("issue-detail-empty").style.display = "none";
+  document.getElementById("issue-detail-content").style.display = "block";
 
   // Header
   document.getElementById("m-title").textContent = i.title;
@@ -4382,12 +4404,9 @@ function openModal(idx) {
       <p class="no-comments">No comments on this issue.</p>`;
   }
 
-  document.getElementById("modal-backdrop").classList.add("open");
-  // Scroll backdrop to top in case it was previously scrolled
-  document.getElementById("modal-backdrop").scrollTop = 0;
+  // Scroll the detail panel to top in case it was previously scrolled
+  document.getElementById("issue-detail-col").scrollTop = 0;
 }
-function closeModal()       { closeModalDirect(); }
-function closeModalDirect()  { document.getElementById("modal-backdrop").classList.remove("open"); }
 
 // ── export modal ──────────────────────────────────
 function openExportModal() {
@@ -4406,7 +4425,7 @@ function closeExportModalDirect() {
 }
 function closeExport() { closeExportModalDirect(); }
 document.addEventListener("keydown", e => {
-  if (e.key==="Escape") { closeModalDirect(); closeExportModalDirect(); }
+  if (e.key==="Escape") { closeExportModalDirect(); }
 });
 
 // ── export format toggle ──────────────────────────
@@ -9774,35 +9793,60 @@ if (document.readyState === 'loading') {
   <div class="section-label" data-i18n="analysis">Analysis</div>
   <div class="chart-grid" id="chart-grid"></div>
 
-  <!-- TABLE -->
+  <!-- TABLE + DETAIL -->
   <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:0">
     <span data-i18n="issue_register">Issue register</span>
     <button class="issues-export-btn" onclick="openExportModal()" data-i18n="export_btn">Export → MS Project</button>
   </div>
-  <div class="table-section">
-    <div class="table-header">
-      <h2>Issues</h2>
-      <span class="table-count" id="table-count">0</span>
-      <div class="sort-bar" id="issue-sort-bar">
-        <span class="sort-bar-label">Sort:</span>
-        <button class="sort-btn" onclick="_issueSort('title','asc')" id="isort-az" data-i18n="sort_az">A&#8594;Z</button>
-        <button class="sort-btn" onclick="_issueSort('title','desc')" id="isort-za" data-i18n="sort_za">Z&#8594;A</button>
-        <button class="sort-btn" onclick="_issueSort('created','desc')" id="isort-new" data-i18n="sort_newest">Newest</button>
-        <button class="sort-btn" onclick="_issueSort('created','asc')" id="isort-old" data-i18n="sort_oldest">Oldest</button>
-        <button class="sort-btn" onclick="_issueSort('priority','asc')" id="isort-pri" data-i18n="sort_priority">Priority</button>
-        <button class="sort-btn active" onclick="_issueSort('due','asc')" id="isort-due" data-i18n="sort_due">Due date</button>
+  <div class="issues-layout">
+    <div class="table-section">
+      <div class="table-header">
+        <h2>Issues</h2>
+        <span class="table-count" id="table-count">0</span>
+        <div class="sort-bar" id="issue-sort-bar">
+          <span class="sort-bar-label">Sort:</span>
+          <button class="sort-btn" onclick="_issueSort('title','asc')" id="isort-az" data-i18n="sort_az">A&#8594;Z</button>
+          <button class="sort-btn" onclick="_issueSort('title','desc')" id="isort-za" data-i18n="sort_za">Z&#8594;A</button>
+          <button class="sort-btn" onclick="_issueSort('created','desc')" id="isort-new" data-i18n="sort_newest">Newest</button>
+          <button class="sort-btn" onclick="_issueSort('created','asc')" id="isort-old" data-i18n="sort_oldest">Oldest</button>
+          <button class="sort-btn" onclick="_issueSort('priority','asc')" id="isort-pri" data-i18n="sort_priority">Priority</button>
+          <button class="sort-btn active" onclick="_issueSort('due','asc')" id="isort-due" data-i18n="sort_due">Due date</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="issues-table">
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="btn-prev" onclick="changePage(-1)" data-i18n="prev">← Prev</button>
+        <span class="page-info" id="page-info">Page 1</span>
+        <button id="btn-next" onclick="changePage(1)" data-i18n="next">Next →</button>
       </div>
     </div>
-    <div class="table-scroll">
-      <table id="issues-table">
-        <thead id="table-head"></thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
-    <div class="pagination">
-      <button id="btn-prev" onclick="changePage(-1)" data-i18n="prev">← Prev</button>
-      <span class="page-info" id="page-info">Page 1</span>
-      <button id="btn-next" onclick="changePage(1)" data-i18n="next">Next →</button>
+
+    <div class="issue-detail-col" id="issue-detail-col">
+      <div class="issue-detail-empty" id="issue-detail-empty">
+        <span style="font-size:1.6rem;opacity:.4">☷</span>
+        <span>Select an issue to see details</span>
+      </div>
+      <div id="issue-detail-content" style="display:none">
+        <div class="modal-header">
+          <div class="modal-title" id="m-title"></div>
+          <div class="modal-meta" id="m-meta"></div>
+        </div>
+        <div class="modal-body">
+          <div class="modal-snapshot">
+            <img id="m-img" src="" alt="snapshot" style="display:none;max-width:100%;max-height:280px;border-radius:4px">
+            <div id="m-no-snapshot" style="color:var(--text3);font-size:.75rem;text-align:center;padding:20px">No snapshot available</div>
+            <div id="m-snap-label" style="font-size:.62rem;color:var(--text3);margin-top:6px;text-align:center"></div>
+          </div>
+          <div id="m-grid" class="modal-grid"></div>
+        </div>
+        <div id="m-desc" class="modal-desc" style="display:none"></div>
+        <div id="m-comments" class="modal-comments"></div>
+      </div>
     </div>
   </div>
 
@@ -9965,29 +10009,6 @@ if (document.readyState === 'loading') {
   </div>
 </div>
 
-
-<!-- Issue detail modal -->
-<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
-  <div class="modal" id="issue-modal">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" id="m-title"></div>
-        <div class="modal-meta" id="m-meta"></div>
-      </div>
-      <button class="modal-close" onclick="closeModal()">&#10005;</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-snapshot">
-        <img id="m-img" src="" alt="snapshot" style="display:none;max-width:100%;max-height:280px;border-radius:4px">
-        <div id="m-no-snapshot" style="color:var(--text3);font-size:.75rem;text-align:center;padding:20px">No snapshot available</div>
-        <div id="m-snap-label" style="font-size:.62rem;color:var(--text3);margin-top:6px;text-align:center"></div>
-      </div>
-      <div id="m-grid" class="modal-grid"></div>
-    </div>
-    <div id="m-desc" class="modal-desc" style="display:none"></div>
-    <div id="m-comments" class="modal-comments"></div>
-  </div>
-</div>
 
 <!-- Export modal backdrop + modal -->
 <div id="export-backdrop"
