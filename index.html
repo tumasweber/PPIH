@@ -2505,8 +2505,8 @@ let CONFIG     = {"dashboard":{"title":"PPIH Test Instance","subtitle":"Isolated
 let PROJECTS   = {};
 let MSP_DATA   = [];
 let DOC_DATA   = {"documents":[]};
-let BUILD_TIME = "2026-07-23 16:10 UTC";
-let BUILD_INFO = "Built 2026-07-23 16:10 UTC";
+let BUILD_TIME = "2026-07-24 13:29 UTC";
+let BUILD_INFO = "Built 2026-07-24 13:29 UTC";
 
 
 // ══════════════════════════════════════════════════════════════════
@@ -4062,11 +4062,16 @@ function renderCharts() {
       grid.appendChild(card);
     });
     grid.dataset.built = "1";
-    // Redraw on resize
+    // Redraw on resize — data-built gets cleared and this whole branch re-runs
+    // on every font-size change (see setSize()), so without disconnecting the
+    // previous observer first, every click permanently added one more,
+    // all firing on every future resize.
+    if (grid._ro) { try { grid._ro.disconnect(); } catch(e){} }
     if (window.ResizeObserver) {
-      new ResizeObserver(() => {
+      grid._ro = new ResizeObserver(() => {
         Object.values(chartInstances).forEach(ch => { try { ch._draw(); } catch(e){} });
-      }).observe(grid);
+      });
+      grid._ro.observe(grid);
     }
   }
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -4939,14 +4944,20 @@ function setSize(size) {
     // renderCharts() above only rebuilds the Issue Management analysis grid —
     // every other tab's charts were drawn once at load and never told about
     // the new container size, so their canvases stretch/squeeze instead of
-    // redrawing. Re-render them too.
+    // redrawing. Re-render only the tab that's actually visible: running all
+    // of them unconditionally (including hidden ones, whose containers report
+    // 0-ish dimensions) was wasteful and, with no error isolation between
+    // calls, meant one bad call silently skipped every call after it.
+    const _safeCall = (fn) => { try { if (typeof fn === 'function') fn(); } catch(e) { console.error('[setSize]', e); } };
     const _resizeAffectedCharts = () => {
-      if (typeof _renderOverview === 'function') _renderOverview();
-      if (typeof _renderCosts === 'function') _renderCosts();
-      if (typeof _engInit === 'function') _engInit();
-      if (typeof _docReinit === 'function') _docReinit();
-      if (typeof _renderScope === 'function') _renderScope();
-      if (typeof _renderScopeEvolution === 'function') _renderScopeEvolution();
+      const activeTab = document.querySelector('.tab-panel.active')?.id?.replace('tab-panel-', '');
+      switch (activeTab) {
+        case 'overview': _safeCall(_renderOverview); break;
+        case 'costs':    _safeCall(_renderCosts); break;
+        case 'engdocs':  _safeCall(_engInit); break;
+        case 'docs':     _safeCall(_docReinit); break;
+        case 'scope':    _safeCall(_renderScope); _safeCall(_renderScopeEvolution); break;
+      }
     };
     _resizeAffectedCharts();
     // A single pass right after the attribute change isn't enough — card
