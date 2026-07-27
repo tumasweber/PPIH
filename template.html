@@ -4203,6 +4203,60 @@ function _toggleChartMax(card) {
 }
 
 
+// ── table: column picker ───────────────────────────
+// Every key getColMap() below knows how to label, in a sensible display
+// order — the user's checkbox selection just filters/reorders a subset of
+// this same list, so column order stays predictable regardless of the
+// order columns were checked in.
+const _ALL_TABLE_COLUMNS = [
+  "title","status","type","priority","assigned","due","age_days","created",
+  "discipline","level","spatial","room","space","area","zone","grid_location",
+  "coords_m","labels","stage","source_file","comment_count","bcf_version"
+];
+function _issueColumnsRestoreFromStorage() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("bcf-issue-columns") || "null");
+    if (saved && saved.length) {
+      if (!CONFIG.layout) CONFIG.layout = {};
+      if (!CONFIG.layout.table) CONFIG.layout.table = {};
+      CONFIG.layout.table.columns = saved;
+    }
+  } catch(e) {}
+}
+_issueColumnsRestoreFromStorage();
+function _issueColumnsToggle() {
+  document.querySelectorAll(".mf-panel.open").forEach(p => {
+    if (p.id !== "col-picker-panel") p.classList.remove("open");
+  });
+  const panel = document.getElementById("col-picker-panel");
+  if (!panel) return;
+  const willOpen = !panel.classList.contains("open");
+  if (willOpen) _issueColumnsPopulate();
+  panel.classList.toggle("open");
+}
+function _issueColumnsPopulate() {
+  const panel = document.getElementById("col-picker-panel");
+  if (!panel) return;
+  const cur = new Set(CONFIG.layout?.table?.columns || []);
+  const map = getColMap();
+  panel.innerHTML = _ALL_TABLE_COLUMNS.map(c => {
+    const checked = cur.has(c) ? " checked" : "";
+    return `<label class="mf-opt"><input type="checkbox" value="${c}"${checked} onchange="_issueColumnsChange()">${map[c]||c}</label>`;
+  }).join("");
+}
+function _issueColumnsChange() {
+  const panel = document.getElementById("col-picker-panel");
+  if (!panel) return;
+  let checked = [...panel.querySelectorAll("input[type=checkbox]:checked")].map(c => c.value);
+  if (!checked.length) checked = ["title"];  // never let the table go headerless
+  if (!CONFIG.layout) CONFIG.layout = {};
+  if (!CONFIG.layout.table) CONFIG.layout.table = {};
+  CONFIG.layout.table.columns = checked;
+  try { localStorage.setItem("bcf-issue-columns", JSON.stringify(checked)); } catch(e) {}
+  renderTableHead();
+  renderTableBody();
+}
+
 // ── table ─────────────────────────────────────────
 function getColMap() { return {
   title:         T("col_title"),   status:        T("col_status"),
@@ -9643,7 +9697,13 @@ if (document.readyState === 'loading') {
   <div class="chart-grid" id="chart-grid"></div>
 
   <!-- TABLE + DETAIL -->
-  <div class="section-label" data-i18n="issue_register">Issue register</div>
+  <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:0">
+    <span data-i18n="issue_register">Issue register</span>
+    <div class="mf-group" id="mf-columns">
+      <button class="mf-btn" onclick="_issueColumnsToggle()" title="Choose which columns show in the list">Columns &#9660;</button>
+      <div class="mf-panel" id="col-picker-panel" style="right:0;left:auto;max-height:320px;overflow-y:auto"></div>
+    </div>
+  </div>
   <div class="issues-layout">
     <div class="table-section">
       <div class="table-header">
