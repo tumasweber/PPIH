@@ -129,9 +129,13 @@ layout:
     - { type: bar,      field: level,      title: "By level/storey",     col: 1 }
     - { type: timeline, field: created,    title: "Issues over time",    col: 2 }
 
-  # Issue register table
+  # Issue register table — this is the compact list column next to the
+  # persistent issue-detail panel (not a full data export), so keep it to a
+  # few columns that matter at a glance. Everything else (type, assigned,
+  # discipline, level, spatial, age...) is shown in full in the detail panel
+  # once a row is selected. Add more here if you'd rather see them in the list.
   table:
-    columns:      [title, status, type, priority, assigned, due, age_days, level, spatial]
+    columns:      [title, status, priority, due]
     default_sort: "due"
     sort_dir:     "asc"
     page_size:    20

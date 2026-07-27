@@ -76,7 +76,11 @@ layout:
     - { type: bar,      field: level,      title: "By level/storey",     col: 1 }
     - { type: timeline, field: created,    title: "Issues over time",    col: 2 }
   table:
-    columns: [title, status, type, priority, assigned, due, age_days, level, spatial]
+    # Kept short on purpose: this is the compact list column next to the
+    # persistent issue-detail panel, not a full data export — everything
+    # else (type, assigned, discipline, level, spatial, age...) is already
+    # shown in full in the detail panel when a row is selected.
+    columns: [title, status, priority, due]
     default_sort: due
     sort_dir: asc
     page_size: 20
